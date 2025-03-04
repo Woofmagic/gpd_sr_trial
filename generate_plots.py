@@ -18,16 +18,7 @@ def remove_duplicate_columns(df):
     df = df.loc[:, ~df.columns.duplicated()]
     return df
 
-# Read the CSV file
-df = pd.read_csv('DNN_projections.csv')
-
-# Remove duplicate columns
-df = remove_duplicate_columns(df)
-
-# Save the modified DataFrame back to CSV (optional)
-df.to_csv('DNN_projections_no_duplicates.csv', index=False)
-
-def generate_f_vs_phi_plot_from_csv(csv_path, output_dir='analysis/comparison_plots/version_1'):
+def generate_f_vs_phi_plot_from_csv(csv_path, output_dir='analysis/version_3/cff_plots'):
     """
     Generate an F vs phi_x plot using data from the CSV file.
 
@@ -73,8 +64,6 @@ def generate_f_vs_phi_plot_from_csv(csv_path, output_dir='analysis/comparison_pl
     print(f"F vs phi_x plot saved: {output_png_path}")
 
     #Generating the plot for the kinematic sets 
-
-
 
 def generate_mean_std_plots(df, cff_labels, output_dir='CFF_Mean_Deviation_Plots', sets_per_plot=20):
     """
@@ -123,7 +112,7 @@ def generate_mean_std_plots(df, cff_labels, output_dir='CFF_Mean_Deviation_Plots
             plt.savefig(plot_path)
             plt.close()
 
-def generate_plots_from_csv(csv_path, output_dir='analysis/comparison_plots/version_1'):
+def generate_plots_from_csv(csv_path, output_dir='analysis/version_3/cff_plots'):
     """
     Generate plots (histograms with mean and standard deviation) from the CSV data.
     
@@ -185,7 +174,6 @@ def generate_plots_from_csv(csv_path, output_dir='analysis/comparison_plots/vers
     plt.close()
     print(f"Plots saved to {output_pdf_path}")
 
-
 def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
     """
     Generate all the required plots for each unique kinematic set found in evaluation.csv.
@@ -207,8 +195,8 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
         print(f"Processing Kinematic Set: {kinematic_set}")
 
         # Define paths for the relevant CSV files
-        f_vs_phi_csv = os.path.join(f'analysis/comparison_plots/version_1/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
-        cff_predictions_csv = f'analysis/cff_predictions/version_1/CFFs_Predictions_Set_{kinematic_set}.csv'
+        f_vs_phi_csv = os.path.join(f'analysis/version_3/cross_section_plots/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
+        cff_predictions_csv = f'analysis/version_3/cff_predictions/CFFs_Predictions_Set_{kinematic_set}.csv'
         cff_all_sets_combined_csv = os.path.join('CFFs_AllSets_Combined.csv')
 
 
@@ -234,7 +222,15 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
 # Example usage
 evaluation_csv = 'DNN_projections.csv'
 scratch_path = '~/'
-output_dir = 'analysis/comparison_plots/version_1'
+output_dir = 'analysis/version_3/cff_plots'
+
+# Read the CSV file
+df = pd.read_csv('DNN_projections.csv')
+
+# Remove duplicate columns
+df = remove_duplicate_columns(df)
+
+# Save the modified DataFrame back to CSV (optional)
+df.to_csv('DNN_projections_no_duplicates.csv', index=False)
 
 generate_all_plots(evaluation_csv, scratch_path, output_dir)
-
