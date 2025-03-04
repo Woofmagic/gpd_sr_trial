@@ -27,7 +27,7 @@ df = remove_duplicate_columns(df)
 # Save the modified DataFrame back to CSV (optional)
 df.to_csv('DNN_projections_no_duplicates.csv', index=False)
 
-def generate_f_vs_phi_plot_from_csv(csv_path, output_dir='Comparison_Plots'):
+def generate_f_vs_phi_plot_from_csv(csv_path, output_dir='analysis/comparison_plots/version_1'):
     """
     Generate an F vs phi_x plot using data from the CSV file.
 
@@ -123,7 +123,7 @@ def generate_mean_std_plots(df, cff_labels, output_dir='CFF_Mean_Deviation_Plots
             plt.savefig(plot_path)
             plt.close()
 
-def generate_plots_from_csv(csv_path, output_dir='Comparison_Plots'):
+def generate_plots_from_csv(csv_path, output_dir='analysis/comparison_plots/version_1'):
     """
     Generate plots (histograms with mean and standard deviation) from the CSV data.
     
@@ -207,8 +207,8 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
         print(f"Processing Kinematic Set: {kinematic_set}")
 
         # Define paths for the relevant CSV files
-        f_vs_phi_csv = os.path.join(f'Comparison_Plots/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
-        cff_predictions_csv = f'CFF_Predictions/CFFs_Predictions_Set_{kinematic_set}.csv'
+        f_vs_phi_csv = os.path.join(f'analysis/comparison_plots/version_1/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
+        cff_predictions_csv = f'analysis/cff_predictions/version_1/CFFs_Predictions_Set_{kinematic_set}.csv'
         cff_all_sets_combined_csv = os.path.join('CFFs_AllSets_Combined.csv')
 
 
@@ -234,7 +234,7 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
 # Example usage
 evaluation_csv = 'DNN_projections.csv'
 scratch_path = '~/'
-output_dir = 'Comparison_Plots'
+output_dir = 'analysis/comparison_plots/version_1'
 
 generate_all_plots(evaluation_csv, scratch_path, output_dir)
 
