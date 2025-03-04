@@ -188,13 +188,13 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
     
     # Get the list of unique kinematic sets
     unique_sets = df_eval['set'].unique()
-    print(f"Found {len(unique_sets)} unique kinematic sets: {unique_sets}")
+    print(f"> Found {len(unique_sets)} unique kinematic sets: {unique_sets}")
 
     # Loop over each unique set
     for kinematic_set in unique_sets:
-        print(f"Processing Kinematic Set: {kinematic_set}")
 
-        # Define paths for the relevant CSV files
+        print(f"> Now processing kinematic set number {kinematic_set}")
+
         f_vs_phi_csv = os.path.join(f'analysis/version_3/cross_section_plots/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
         cff_predictions_csv = f'analysis/version_3/cff_predictions/CFFs_Predictions_Set_{kinematic_set}.csv'
         cff_all_sets_combined_csv = os.path.join('CFFs_AllSets_Combined.csv')
