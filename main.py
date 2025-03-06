@@ -626,9 +626,6 @@ modify_LR_patience = 400
 modify_LR_factor = 0.9
 SETTING_DNN_TRAINING_VERBOSE = 1
 
-callback_modify_learning_rate = tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor=modify_LR_factor, patience=modify_LR_patience, mode='auto')
-callback_early_stop = tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience=EarlyStop_patience)
-
 def symbolic_regression(x_data, y_data):
     
     from pysr import PySRRegressor
@@ -854,8 +851,6 @@ def run_replica_method(number_of_replicas, model_builder, data_file, kinematic_s
             y_error_data = pseudodata_dataframe['sigmaF'],
             split_percentage = 0.1)
         
-        print(training_x_data)
-        
         # (1): Set up the Figure instance
         figure_instance_predictions = plt.figure(figsize = (18, 6))
 
@@ -895,8 +890,8 @@ def run_replica_method(number_of_replicas, model_builder, data_file, kinematic_s
             validation_data = (testing_x_data, testing_y_data),
             epochs = EPOCHS,
             callbacks = [
-                callback_modify_learning_rate,
-                callback_early_stop
+                tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor = modify_LR_factor, patience = modify_LR_patience, mode = 'auto'),
+                tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = EarlyStop_patience)
             ],
             batch_size = BATCH_SIZE,
             verbose = SETTING_DNN_TRAINING_VERBOSE)
