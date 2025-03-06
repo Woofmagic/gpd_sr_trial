@@ -411,7 +411,7 @@ def generate_replica_data(pandas_dataframe: pd.DataFrame, mean_value_column_name
 
     return pseudodata_dataframe
 
-def run_replica_method(number_of_replicas, model_builder, data_file, kinematic_set_number):
+def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, kinematic_set_number):
 
     if SETTING_VERBOSE:
         print(f"> Beginning Replica Method with {number_of_replicas} total Replicas...")
@@ -646,7 +646,7 @@ def run():
         if SETTING_VERBOSE:
             print(f"> Now running kinematic set number {kinematic_set_number}...")
 
-        run_replica_method(
+        run_local_fit_replica_method(
             number_of_replicas = 5,
             model_builder = local_fit_model,
             data_file = data_file,
