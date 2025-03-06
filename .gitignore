@@ -1,5 +1,7 @@
-data.csv
 **/__pycache__/
+
+science/analysis
+science/data
 
 *.png
 *.pdf

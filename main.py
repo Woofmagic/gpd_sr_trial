@@ -1,3 +1,4 @@
+import sys
 import os
 import re
 import datetime
@@ -573,19 +574,19 @@ def run():
 
     print(f"> Determined next analysis directory: {_version_number}")
 
-    # try:
-    #     # tf.config.set_visible_devices([],'GPU')
-    #     tensorflow_found_devices = tf.config.list_physical_devices()
+    try:
+        # tf.config.set_visible_devices([],'GPU')
+        tensorflow_found_devices = tf.config.list_physical_devices()
 
-    #     if len(tf.config.list_physical_devices()) != 0:
-    #         for device in tensorflow_found_devices:
-    #             print(f"> TensorFlow detected device: {device}")
+        if len(tf.config.list_physical_devices()) != 0:
+            for device in tensorflow_found_devices:
+                print(f"> TensorFlow detected device: {device}")
 
-    #     else:
-    #         print("> TensorFlow didn't find CPUs or GPUs...")
+        else:
+            print("> TensorFlow didn't find CPUs or GPUs...")
 
-    # except Exception as error:
-    #     print(f"> TensorFlow could not find devices due to error:\n> {error}")
+    except Exception as error:
+        print(f"> TensorFlow could not find devices due to error:\n> {error}")
     
     DATA_FILE_NAME = "data.csv"
     data_file = pd.read_csv(DATA_FILE_NAME)
@@ -639,7 +640,8 @@ def run():
     plt.close()
     
     # for kinematic_set_number in kinematic_sets:
-    for kinematic_set_number in [1.0, 2.0, 3.0, 4.0]:
+    RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
+    for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
 
         if SETTING_VERBOSE:
             print(f"> Now running kinematic set number {kinematic_set_number}...")
@@ -659,9 +661,6 @@ def run():
         if SETTING_VERBOSE:
             print(f"> Now generating .csv files for kinematic set #{available_kinematic_set}...")
 
-        # model_paths = [os.path.join(os.getcwd(), file) for file in os.listdir(os.getcwd()) if file.endswith(f"v{_version_number}.keras")]
-        # model_paths = os.getcwd()
-
         try:
             model_paths = [os.path.join(os.getcwd(), file) for file in os.listdir(os.getcwd()) if file.endswith(f"v{_version_number}.keras")]
             if SETTING_DEBUG:
@@ -669,6 +668,7 @@ def run():
 
         except Exception as error:
             print(f" Error in capturing replicas in list:\n> {error}")
+            sys.exit(0)
 
         if SETTING_VERBOSE:
             print(f"> Obtained {len(model_paths)} models.")
