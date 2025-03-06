@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Concatenate, Dense, Lambda
 from tensorflow.keras.models import Model
 
-def build_global_fitting_dnn():
+def global_fit_model():
     """Creates and returns a fresh instance of the neural network model."""
     initializer = tf.keras.initializers.RandomUniform(
         minval = -10.0,
