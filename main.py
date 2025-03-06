@@ -11,42 +11,6 @@ import math
 
 _version_number = 1
 
-# def GlobalFitDNNmodel():
-#     initializer = tf.keras.initializers.RandomUniform(minval=-0.1, maxval=0.1, seed=None)
-
-#     # Input shape for multiple kinematic values
-#     inputs = tf.keras.Input(shape=(5), name='input_layer')  # (QQ, x_b, t, phi, k)
-#     QQ, x_b, t, phi, k = tf.split(inputs, num_or_size_splits=5, axis=1)
-
-#     # Concatenate QQ, x_b, t for processing
-#     kinematics = tf.keras.layers.concatenate([QQ, x_b, t])
-
-#     # Neural network layers to predict CFFs
-#     x1 = tf.keras.layers.Dense(480, activation="relu6", kernel_initializer=initializer)(kinematics)
-#     x2 = tf.keras.layers.Dense(320, activation="relu6", kernel_initializer=initializer)(x1)
-#     x3 = tf.keras.layers.Dense(240, activation="relu6", kernel_initializer=initializer)(x2)
-#     x4 = tf.keras.layers.Dense(120, activation="relu6", kernel_initializer=initializer)(x3)
-#     x5 = tf.keras.layers.Dense(32, activation="relu6", kernel_initializer=initializer)(x4)
-
-#     # Predicting CFFs
-#     outputs = tf.keras.layers.Dense(4, activation="linear", kernel_initializer=initializer, name='cff_output_layer')(x5)
-
-#     # Concatenate input and output for further layers
-#     total_FInputs = tf.keras.layers.concatenate([inputs, outputs], axis=1)
-    
-#     # Assuming "TotalFLayer" is a custom layer (not defined here)
-#     TotalF = TotalFLayer(name='TotalFLayer')(total_FInputs)
-    
-#     # Constructing the model
-#     tfModel = tf.keras.Model(inputs=inputs, outputs=TotalF, name="Global_Fit_Model")
-    
-#     tfModel.compile(
-#         optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),  # Define the learning rate
-#         loss=tf.keras.losses.MeanSquaredError()
-#     )
-    
-#     return tfModel
-
 from networks.local_fit.local_fit_model import local_fit_model
 from networks.global_fit.global_fit_model import global_fit_model
 
