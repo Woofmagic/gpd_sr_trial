@@ -15,7 +15,7 @@ plt.rcParams.update(plt.rcParamsDefault)
 from networks.local_fit.local_fit_model import local_fit_model
 from networks.global_fit.global_fit_model import global_fit_model
 
-_version_number = 0.
+_version_number = 1
 
 class PlotCustomizer:
     """Later description"""
@@ -98,28 +98,42 @@ class PlotCustomizer:
             # (8): Apply a grid on the plot according to a boolean flag:
             self.axes_object.grid(self.grid)
 
-    def add_line_plot(self, x_data, y_data, label: str = "", color = None, linestyle = '-'):
+    def add_line_plot(self, x_data, y_data, z_data=None, label: str = "", color=None, linestyle='-'):
         """
         Add a line plot to the Axes object:
-        connects element-wise points of the two provided arrays.
+        - In 2D: connects element-wise points of (x, y)
+        - In 3D: connects element-wise points of (x, y, z)
 
         Parameters
         ----------
         x_data: array_like
-            
+            X-axis data points.
+
         y_data: array_like
+            Y-axis data points.
+
+        z_data: array_like, optional
+            Z-axis data points (for 3D plotting).
 
         label: str
+            Label for the line.
 
         color: str
+            Color of the line.
 
         linestyle: str
+            Line style (default is solid).
         """
 
-        with rc_context(rc = self._custom_rc_params):
+        with rc_context(rc=self._custom_rc_params):
+            if self.axes_object.name == '3d':  # Check if it's a 3D plot
+                if z_data is None:
+                    raise ValueError("For 3D plots, 'z_data' must be provided.")
 
-            # (1): Just add the line plot:
-            self.axes_object.plot(x_data, y_data, label = label, color = color, linestyle = linestyle)
+                self.axes_object.plot(x_data, y_data, z_data, label=label, color=color, linestyle=linestyle)
+            
+            else:  # 2D case
+                self.axes_object.plot(x_data, y_data, label=label, color=color, linestyle=linestyle)
 
             if label:
                 self.axes_object.legend()
@@ -287,8 +301,9 @@ class PlotCustomizer:
 SETTING_VERBOSE = True
 SETTING_DEBUG = True
 Learning_Rate = 0.001
-EPOCHS = 300
-BATCH_SIZE = 20
+EPOCHS = 3000
+BATCH_SIZE_LOCAL_FITS = 20
+BATCH_SIZE_GLOBAL_FITS = 10
 EarlyStop_patience = 1000
 modify_LR_patience = 400
 modify_LR_factor = 0.9
@@ -485,7 +500,7 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
                 tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor = modify_LR_factor, patience = modify_LR_patience, mode = 'auto'),
                 tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = EarlyStop_patience)
             ],
-            batch_size = BATCH_SIZE,
+            batch_size = BATCH_SIZE_LOCAL_FITS,
             verbose = SETTING_DNN_TRAINING_VERBOSE)
         
         training_loss_data = history_of_training.history['loss']
@@ -551,7 +566,10 @@ def run_global_fit_replica_method(number_of_replicas, model_builder, data_file):
             print(f"> Now initializing replica #{replica_index + 1}...")
 
         tensorflow_network = model_builder()
-        print(data_file['ReH_pred'])
+
+        if SETTING_DEBUG:
+            print("> Succesfully loaded TF model!")
+
         data_file = data_file.copy()
 
         # Apply Gaussian sampling for each unique 'set'
@@ -664,7 +682,7 @@ def run_global_fit_replica_method(number_of_replicas, model_builder, data_file):
                 tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor = modify_LR_factor, patience = modify_LR_patience, mode = 'auto'),
                 tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = EarlyStop_patience)
             ],
-            batch_size = BATCH_SIZE,
+            batch_size = BATCH_SIZE_GLOBAL_FITS,
             verbose = SETTING_DNN_TRAINING_VERBOSE)
         
         training_loss_data = history_of_training.history['loss']
@@ -825,162 +843,162 @@ def run():
     figure_instance_kinematic_phase_space.savefig(f"phase_space_v{_version_number}.png")
     plt.close()
     
-    # for kinematic_set_number in kinematic_sets:
+    for kinematic_set_number in kinematic_sets:
     # RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
     # for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
 
-    #     if SETTING_VERBOSE:
-    #         print(f"> Now running kinematic set number {kinematic_set_number}...")
+        if SETTING_VERBOSE:
+            print(f"> Now running kinematic set number {kinematic_set_number}...")
 
-    #     run_local_fit_replica_method(
-    #         number_of_replicas = 5,
-    #         model_builder = local_fit_model,
-    #         data_file = data_file,
-    #         kinematic_set_number = kinematic_set_number)
+        run_local_fit_replica_method(
+            number_of_replicas = 200,
+            model_builder = local_fit_model,
+            data_file = data_file,
+            kinematic_set_number = kinematic_set_number)
 
-    #     if SETTING_VERBOSE:
-    #         print(f"> Finished running Replica Method on kinematic set number {kinematic_set_number}!")
+        if SETTING_VERBOSE:
+            print(f"> Finished running Replica Method on kinematic set number {kinematic_set_number}!")
 
-    # available_kinematic_sets = [1, 2, 3, 4]
-    # for available_kinematic_set in available_kinematic_sets:
+    available_kinematic_sets = [1, 2, 3, 4]
+    for available_kinematic_set in available_kinematic_sets:
 
-    #     if SETTING_VERBOSE:
-    #         print(f"> Now generating .csv files for kinematic set #{available_kinematic_set}...")
+        if SETTING_VERBOSE:
+            print(f"> Now generating .csv files for kinematic set #{available_kinematic_set}...")
 
-    #     try:
-    #         model_paths = [os.path.join(os.getcwd(), file) for file in os.listdir(os.getcwd()) if file.endswith(f"v{_version_number}.keras")]
-    #         if SETTING_DEBUG:
-    #             print(f"> Successfully  captured {len(model_paths)} in list for iteration.")
+        try:
+            model_paths = [os.path.join(os.getcwd(), file) for file in os.listdir(os.getcwd()) if file.endswith(f"v{_version_number}.keras")]
+            if SETTING_DEBUG:
+                print(f"> Successfully  captured {len(model_paths)} in list for iteration.")
 
-    #     except Exception as error:
-    #         print(f" Error in capturing replicas in list:\n> {error}")
-    #         sys.exit(0)
+        except Exception as error:
+            print(f" Error in capturing replicas in list:\n> {error}")
+            sys.exit(0)
 
-    #     if SETTING_VERBOSE:
-    #         print(f"> Obtained {len(model_paths)} models.")
+        if SETTING_VERBOSE:
+            print(f"> Obtained {len(model_paths)} models.")
 
-    #     dataframe_restricted_to_current_kinematic_set = data_file[data_file['set'] == available_kinematic_set]
-    #     dataframe_restricted_to_current_kinematic_set = dataframe_restricted_to_current_kinematic_set
+        dataframe_restricted_to_current_kinematic_set = data_file[data_file['set'] == available_kinematic_set]
+        dataframe_restricted_to_current_kinematic_set = dataframe_restricted_to_current_kinematic_set
 
-    #     prediction_inputs = dataframe_restricted_to_current_kinematic_set[['QQ', 'x_b', 't', 'phi_x', 'k']].to_numpy()
-    #     real_cross_section_values = dataframe_restricted_to_current_kinematic_set['F'].values
-    #     phi_values = dataframe_restricted_to_current_kinematic_set['phi_x'].values
+        prediction_inputs = dataframe_restricted_to_current_kinematic_set[['QQ', 'x_b', 't', 'phi_x', 'k']].to_numpy()
+        real_cross_section_values = dataframe_restricted_to_current_kinematic_set['F'].values
+        phi_values = dataframe_restricted_to_current_kinematic_set['phi_x'].values
     
-    #     # These contain *per replica* predictions
-    #     predictions_for_cross_section = []
-    #     predictions_for_cffs = []
+        # These contain *per replica* predictions
+        predictions_for_cross_section = []
+        predictions_for_cffs = []
 
-    #     predictions_for_cross_section_average = []
-    #     predictions_for_cffs_average = []
-    #     predictions_for_cross_section_std_dev = []
+        predictions_for_cross_section_average = []
+        predictions_for_cffs_average = []
+        predictions_for_cross_section_std_dev = []
 
-    #     for replica_models in model_paths:
+        for replica_models in model_paths:
 
-    #         if SETTING_VERBOSE:
-    #             print(f"> Now making predictions with replica model: {str(replica_models)}")
+            if SETTING_VERBOSE:
+                print(f"> Now making predictions with replica model: {str(replica_models)}")
     
-    #         # This just loads a TF model file:
-    #         cross_section_model = tf.keras.models.load_model(replica_models, custom_objects = {'TotalFLayer': TotalFLayer})
+            # This just loads a TF model file:
+            cross_section_model = tf.keras.models.load_model(replica_models, custom_objects = {'TotalFLayer': TotalFLayer})
             
-    #         if SETTING_DEBUG:
-    #             print("> Successfully loaded cross section model!")
+            if SETTING_DEBUG:
+                print("> Successfully loaded cross section model!")
 
-    #         # This defines a *new* TF model:
-    #         cff_model = tf.keras.Model(
-    #             inputs = cross_section_model.input,
-    #             outputs = cross_section_model.get_layer('cff_output_layer').output)
+            # This defines a *new* TF model:
+            cff_model = tf.keras.Model(
+                inputs = cross_section_model.input,
+                outputs = cross_section_model.get_layer('cff_output_layer').output)
             
-    #         if SETTING_DEBUG:
-    #             print("> Successfully CFF submodel!")
+            if SETTING_DEBUG:
+                print("> Successfully CFF submodel!")
 
-    #         predicted_cffs = cff_model.predict(prediction_inputs)
-    #         predicted_cross_sections = cross_section_model.predict(prediction_inputs)
+            predicted_cffs = cff_model.predict(prediction_inputs)
+            predicted_cross_sections = cross_section_model.predict(prediction_inputs)
 
-    #         predictions_for_cross_section.append(predicted_cffs)
-    #         predictions_for_cffs.append(predicted_cross_sections)
+            predictions_for_cross_section.append(predicted_cffs)
+            predictions_for_cffs.append(predicted_cross_sections)
 
-    #     for azimuthal_angle in range(len(phi_values)):
+        for azimuthal_angle in range(len(phi_values)):
 
-    #         if SETTING_DEBUG:
-    #             print(f"> Now analyzing averages at azimuthal angle of {azimuthal_angle} degrees...")
+            if SETTING_DEBUG:
+                print(f"> Now analyzing averages at azimuthal angle of {azimuthal_angle} degrees...")
 
-    #         cross_section_at_given_phi = [sigma[azimuthal_angle] for sigma in predictions_for_cross_section]
-    #         predictions_for_cross_section_average.append(np.mean(cross_section_at_given_phi))
-    #         predictions_for_cross_section_std_dev.append(np.std(cross_section_at_given_phi))
+            cross_section_at_given_phi = [sigma[azimuthal_angle] for sigma in predictions_for_cross_section]
+            predictions_for_cross_section_average.append(np.mean(cross_section_at_given_phi))
+            predictions_for_cross_section_std_dev.append(np.std(cross_section_at_given_phi))
             
-    #     predictions_for_cross_section_average = np.array(predictions_for_cross_section_average)
-    #     predictions_for_cross_section_std_dev = np.array(predictions_for_cross_section_std_dev)
+        predictions_for_cross_section_average = np.array(predictions_for_cross_section_average)
+        predictions_for_cross_section_std_dev = np.array(predictions_for_cross_section_std_dev)
 
-    #     chi_squared_error = np.sum(((real_cross_section_values - predictions_for_cross_section_average) / predictions_for_cross_section_std_dev) ** 2)
-    #     chi_square_file = "chi2.txt"
-    #     if not os.path.exists(chi_square_file):
-    #         with open(chi_square_file, 'w') as file:
-    #             file.write("Kinematic Set\tChi-Square Error\n")  # Write header if the file doesn't exist
-    #     # Append chi-square error data to the file
-    #     with open(chi_square_file, 'a') as file:
-    #         file.write(f"{available_kinematic_set}\t{chi_squared_error:.4f}\n")
-    #     print(f"Kinematic Set {available_kinematic_set}: Chi-Square Error = {chi_squared_error:.4f}")
+        chi_squared_error = np.sum(((real_cross_section_values - predictions_for_cross_section_average) / predictions_for_cross_section_std_dev) ** 2)
+        chi_square_file = "chi2.txt"
+        if not os.path.exists(chi_square_file):
+            with open(chi_square_file, 'w') as file:
+                file.write("Kinematic Set\tChi-Square Error\n")  # Write header if the file doesn't exist
+        # Append chi-square error data to the file
+        with open(chi_square_file, 'a') as file:
+            file.write(f"{available_kinematic_set}\t{chi_squared_error:.4f}\n")
+        print(f"Kinematic Set {available_kinematic_set}: Chi-Square Error = {chi_squared_error:.4f}")
 
-    #     f_vs_phi_data = {
-    #         'azimuthal_phi': phi_values,
-    #         'cross_section': real_cross_section_values,
-    #         'cross_section_average_prediction': predictions_for_cross_section_average,
-    #         'cross_section_std_dev_prediction': predictions_for_cross_section_std_dev
-    #     }
+        f_vs_phi_data = {
+            'azimuthal_phi': phi_values,
+            'cross_section': real_cross_section_values,
+            'cross_section_average_prediction': predictions_for_cross_section_average,
+            'cross_section_std_dev_prediction': predictions_for_cross_section_std_dev
+        }
 
-    #     f_vs_phi_df = pd.DataFrame(f_vs_phi_data)
-    #     f_vs_phi_df.to_csv('fuczzzk.csv', index=False)
+        f_vs_phi_df = pd.DataFrame(f_vs_phi_data)
+        f_vs_phi_df.to_csv('fuczzzk.csv', index=False)
 
-    #     # (1): Set up the Figure instance
-    #     figure_cff_real_h_histogram = plt.figure(figsize = (18, 6))
-    #     figure_cff_real_e_histogram = plt.figure(figsize = (18, 6))
-    #     figure_cff_real_ht_histogram = plt.figure(figsize = (18, 6))
-    #     figure_cff_dvcs_histogram = plt.figure(figsize = (18, 6))
-    #     axis_instance_cff_h_histogram = figure_cff_real_h_histogram.add_subplot(1, 1, 1)
-    #     axis_instance_cff_e_histogram = figure_cff_real_e_histogram.add_subplot(1, 1, 1)
-    #     axis_instance_cff_ht_histogram = figure_cff_real_ht_histogram.add_subplot(1, 1, 1)
-    #     axis_instance_cff_dvcs_histogram = figure_cff_dvcs_histogram.add_subplot(1, 1, 1)
-    #     plot_customization_cff_h_histogram = PlotCustomizer(
-    #         axis_instance_cff_h_histogram,
-    #         title = r"Predictions for $Re \left(H \right)$")
-    #     plot_customization_cff_e_histogram = PlotCustomizer(
-    #         axis_instance_cff_e_histogram,
-    #         title = r"Predictions for $Re \left(E \right)$")
-    #     plot_customization_cff_ht_histogram = PlotCustomizer(
-    #         axis_instance_cff_ht_histogram,
-    #         title = r"Predictions for $Re \left(\tilde{H} \right)$")
-    #     plot_customization_cff_dvcs_histogram = PlotCustomizer(
-    #         axis_instance_cff_dvcs_histogram,
-    #         title = r"Predictions for $DVCS$")
-    #     plot_customization_cff_h_histogram.add_bar_plot(
-    #         x_data = np.array(predictions_for_cffs)[:, :, 1].T.flatten(),
-    #         bins = 20,
-    #         label = "Histogram Bars",
-    #         color = "lightblue",
-    #         use_histogram = True)
-    #     plot_customization_cff_e_histogram.add_bar_plot(
-    #         x_data = np.array(predictions_for_cffs)[:, :, 2].T.flatten(),
-    #         bins = 20,
-    #         label = "Histogram Bars",
-    #         color = "lightblue",
-    #         use_histogram = True)
-    #     plot_customization_cff_ht_histogram.add_bar_plot(
-    #         x_data = np.array(predictions_for_cffs)[:, :, 3].T.flatten(),
-    #         bins = 20,
-    #         label = "Histogram Bars",
-    #         color = "lightblue",
-    #         use_histogram = True)
-    #     plot_customization_cff_dvcs_histogram.add_bar_plot(
-    #         x_data = np.array(predictions_for_cffs)[:, :, 4].T.flatten(),
-    #         bins = 20,
-    #         label = "Histogram Bars",
-    #         color = "lightblue",
-    #         use_histogram = True)
-    #     figure_cff_real_h_histogram.savefig(f"local_fit_cff_real_h_{_version_number}.png")
-    #     figure_cff_real_e_histogram.savefig(f"local_fit_cff_real_e_{_version_number}.png")
-    #     figure_cff_real_ht_histogram.savefig(f"local_fit_cff_real_ht_{_version_number}.png")
-    #     figure_cff_dvcs_histogram.savefig(f"local_fit_cff_dvcs_{_version_number}.png")
-    #     plt.close()
+        # (1): Set up the Figure instance
+        figure_cff_real_h_histogram = plt.figure(figsize = (18, 6))
+        figure_cff_real_e_histogram = plt.figure(figsize = (18, 6))
+        figure_cff_real_ht_histogram = plt.figure(figsize = (18, 6))
+        figure_cff_dvcs_histogram = plt.figure(figsize = (18, 6))
+        axis_instance_cff_h_histogram = figure_cff_real_h_histogram.add_subplot(1, 1, 1)
+        axis_instance_cff_e_histogram = figure_cff_real_e_histogram.add_subplot(1, 1, 1)
+        axis_instance_cff_ht_histogram = figure_cff_real_ht_histogram.add_subplot(1, 1, 1)
+        axis_instance_cff_dvcs_histogram = figure_cff_dvcs_histogram.add_subplot(1, 1, 1)
+        plot_customization_cff_h_histogram = PlotCustomizer(
+            axis_instance_cff_h_histogram,
+            title = r"Predictions for $Re \left(H \right)$")
+        plot_customization_cff_e_histogram = PlotCustomizer(
+            axis_instance_cff_e_histogram,
+            title = r"Predictions for $Re \left(E \right)$")
+        plot_customization_cff_ht_histogram = PlotCustomizer(
+            axis_instance_cff_ht_histogram,
+            title = r"Predictions for $Re \left(\tilde{H} \right)$")
+        plot_customization_cff_dvcs_histogram = PlotCustomizer(
+            axis_instance_cff_dvcs_histogram,
+            title = r"Predictions for $DVCS$")
+        plot_customization_cff_h_histogram.add_bar_plot(
+            x_data = np.array(predictions_for_cffs)[:, :, 1].T.flatten(),
+            bins = 20,
+            label = "Histogram Bars",
+            color = "lightblue",
+            use_histogram = True)
+        plot_customization_cff_e_histogram.add_bar_plot(
+            x_data = np.array(predictions_for_cffs)[:, :, 2].T.flatten(),
+            bins = 20,
+            label = "Histogram Bars",
+            color = "lightblue",
+            use_histogram = True)
+        plot_customization_cff_ht_histogram.add_bar_plot(
+            x_data = np.array(predictions_for_cffs)[:, :, 3].T.flatten(),
+            bins = 20,
+            label = "Histogram Bars",
+            color = "lightblue",
+            use_histogram = True)
+        plot_customization_cff_dvcs_histogram.add_bar_plot(
+            x_data = np.array(predictions_for_cffs)[:, :, 4].T.flatten(),
+            bins = 20,
+            label = "Histogram Bars",
+            color = "lightblue",
+            use_histogram = True)
+        figure_cff_real_h_histogram.savefig(f"local_fit_cff_real_h_{_version_number}.png")
+        figure_cff_real_e_histogram.savefig(f"local_fit_cff_real_e_{_version_number}.png")
+        figure_cff_real_ht_histogram.savefig(f"local_fit_cff_real_ht_{_version_number}.png")
+        figure_cff_dvcs_histogram.savefig(f"local_fit_cff_dvcs_{_version_number}.png")
+        plt.close()
 
     #### GLOBAL FIT ####
 
@@ -988,6 +1006,228 @@ def run():
     data_global_fit_for_replica_data = pd.read_csv(DATA_GLOBAL_FIT_FILE_NAME)
 
     global_fit_data_unique_kinematic_sets = data_global_fit_for_replica_data.groupby('set').first().reset_index()
+
+    figure_instance_cff_h_versus_x_and_t = plt.figure(figsize = (8, 6))
+    figure_instance_cff_e_versus_x_and_t = plt.figure(figsize = (8, 6))
+    figure_instance_cff_ht_versus_x_and_t = plt.figure(figsize = (8, 6))
+    figure_instance_cff_dvcs_versus_x_and_t = plt.figure(figsize = (8, 6))
+    axis_instance_cff_h_versus_x_and_t = figure_instance_cff_h_versus_x_and_t.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_e_versus_x_and_t = figure_instance_cff_e_versus_x_and_t.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_ht_versus_x_and_t = figure_instance_cff_ht_versus_x_and_t.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_dvcs_versus_x_and_t = figure_instance_cff_dvcs_versus_x_and_t.add_subplot(1, 1, 1, projection = '3d')
+    plot_customization_cff_h_versus_x_and_t = PlotCustomizer(
+        axis_instance_cff_h_versus_x_and_t,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$-t$",
+        zlabel = r"$Re[H]$",
+        grid = True)
+    plot_customization_cff_e_versus_x_and_t = PlotCustomizer(
+        axis_instance_cff_e_versus_x_and_t,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$-t$",
+        zlabel = r"$Re[E]$",
+        grid = True)
+    plot_customization_cff_ht_versus_x_and_t = PlotCustomizer(
+        axis_instance_cff_ht_versus_x_and_t,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$-t$",
+        zlabel = r"$Re[Ht]$",
+        grid = True)
+    plot_customization_cff_dvcs_versus_x_and_t = PlotCustomizer(
+        axis_instance_cff_dvcs_versus_x_and_t,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$-t$",
+        zlabel = r"$DVCS$",
+        grid = True)
+    plot_customization_cff_h_versus_x_and_t.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = -global_fit_data_unique_kinematic_sets['t'],
+        z_data = global_fit_data_unique_kinematic_sets['ReH_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, t, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], -global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['ReH_pred']):
+        plot_customization_cff_h_versus_x_and_t.add_line_plot([xB, xB], [t, t], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_e_versus_x_and_t.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = -global_fit_data_unique_kinematic_sets['t'],
+        z_data = global_fit_data_unique_kinematic_sets['ReE_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, t, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], -global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['ReE_pred']):
+        plot_customization_cff_e_versus_x_and_t.add_line_plot([xB, xB], [t, t], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_ht_versus_x_and_t.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = -global_fit_data_unique_kinematic_sets['t'],
+        z_data = global_fit_data_unique_kinematic_sets['ReHt_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, t, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], -global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['ReHt_pred']):
+        plot_customization_cff_ht_versus_x_and_t.add_line_plot([xB, xB], [t, t], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_dvcs_versus_x_and_t.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = -global_fit_data_unique_kinematic_sets['t'],
+        z_data = global_fit_data_unique_kinematic_sets['dvcs_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, t, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], -global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['dvcs_pred']):
+        plot_customization_cff_dvcs_versus_x_and_t.add_line_plot([xB, xB], [t, t], [0, cff_value], color='#fa9696', linestyle='dashed')
+    figure_instance_cff_h_versus_x_and_t.savefig(f"cff_real_h_vs_xb_and_t_v{_version_number}.png")
+    figure_instance_cff_e_versus_x_and_t.savefig(f"cff_real_e_vs_xb_and_t_v{_version_number}.png")
+    figure_instance_cff_ht_versus_x_and_t.savefig(f"cff_real_ht_vs_xb_and_t_v{_version_number}.png")
+    figure_instance_cff_dvcs_versus_x_and_t.savefig(f"cff_real_dvcs_vs_xb_and_t_v{_version_number}.png")
+    plt.close()
+
+    figure_instance_cff_h_versus_x_and_q_squared = plt.figure(figsize = (8, 6))
+    figure_instance_cff_e_versus_x_and_q_squared = plt.figure(figsize = (8, 6))
+    figure_instance_cff_ht_versus_x_and_q_squared = plt.figure(figsize = (8, 6))
+    figure_instance_cff_dvcs_versus_x_and_q_squared = plt.figure(figsize = (8, 6))
+    axis_instance_cff_h_versus_x_and_q_squared = figure_instance_cff_h_versus_x_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_e_versus_x_and_q_squared = figure_instance_cff_e_versus_x_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_ht_versus_x_and_q_squared = figure_instance_cff_ht_versus_x_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_dvcs_versus_x_and_q_squared = figure_instance_cff_dvcs_versus_x_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    plot_customization_cff_h_versus_x_and_q_squared = PlotCustomizer(
+        axis_instance_cff_h_versus_x_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$Re[H]$",
+        grid = True)
+    plot_customization_cff_e_versus_x_and_q_squared = PlotCustomizer(
+        axis_instance_cff_e_versus_x_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$Re[E]$",
+        grid = True)
+    plot_customization_cff_ht_versus_x_and_q_squared = PlotCustomizer(
+        axis_instance_cff_ht_versus_x_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$Re[Ht]$",
+        grid = True)
+    plot_customization_cff_dvcs_versus_x_and_q_squared = PlotCustomizer(
+        axis_instance_cff_dvcs_versus_x_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$DVCS$",
+        grid = True)
+    plot_customization_cff_h_versus_x_and_q_squared.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['ReH_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, Q, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['ReH_pred']):
+        plot_customization_cff_h_versus_x_and_q_squared.add_line_plot([xB, xB], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_e_versus_x_and_q_squared.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['ReE_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, Q, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['ReE_pred']):
+        plot_customization_cff_e_versus_x_and_q_squared.add_line_plot([xB, xB], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_ht_versus_x_and_q_squared.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['ReHt_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, Q, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['ReHt_pred']):
+        plot_customization_cff_ht_versus_x_and_q_squared.add_line_plot([xB, xB], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_dvcs_versus_x_and_q_squared.add_3d_scatter_plot(
+        x_data = global_fit_data_unique_kinematic_sets['x_b'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['dvcs_pred'],
+        color = 'red',
+        marker = '.')
+    for xB, Q, cff_value in zip(global_fit_data_unique_kinematic_sets['x_b'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['dvcs_pred']):
+        plot_customization_cff_dvcs_versus_x_and_q_squared.add_line_plot([xB, xB], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    figure_instance_cff_h_versus_x_and_q_squared.savefig(f"cff_real_h_vs_xb_and_q_squared_v{_version_number}.png")
+    figure_instance_cff_e_versus_x_and_q_squared.savefig(f"cff_real_e_vs_xb_and_q_squared_v{_version_number}.png")
+    figure_instance_cff_ht_versus_x_and_q_squared.savefig(f"cff_real_ht_vs_xb_and_q_squared_v{_version_number}.png")
+    figure_instance_cff_dvcs_versus_x_and_q_squared.savefig(f"cff_real_dvcs_vs_xb_and_q_squared_v{_version_number}.png")
+    plt.close()
+
+    figure_instance_cff_h_versus_t_and_q_squared = plt.figure(figsize = (8, 6))
+    figure_instance_cff_e_versus_t_and_q_squared = plt.figure(figsize = (8, 6))
+    figure_instance_cff_ht_versus_t_and_q_squared = plt.figure(figsize = (8, 6))
+    figure_instance_cff_dvcs_versus_t_and_q_squared = plt.figure(figsize = (8, 6))
+    axis_instance_cff_h_versus_t_and_q_squared = figure_instance_cff_h_versus_t_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_e_versus_t_and_q_squared = figure_instance_cff_e_versus_t_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_ht_versus_t_and_q_squared = figure_instance_cff_ht_versus_t_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    axis_instance_cff_dvcs_versus_t_and_q_squared = figure_instance_cff_dvcs_versus_t_and_q_squared.add_subplot(1, 1, 1, projection = '3d')
+    plot_customization_cff_h_versus_t_and_q_squared = PlotCustomizer(
+        axis_instance_cff_h_versus_t_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$Re[H]$",
+        grid = True)
+    plot_customization_cff_e_versus_t_and_q_squared = PlotCustomizer(
+        axis_instance_cff_e_versus_t_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$Re[E]$",
+        grid = True)
+    plot_customization_cff_ht_versus_t_and_q_squared = PlotCustomizer(
+        axis_instance_cff_ht_versus_t_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$Re[Ht]$",
+        grid = True)
+    plot_customization_cff_dvcs_versus_t_and_q_squared = PlotCustomizer(
+        axis_instance_cff_dvcs_versus_t_and_q_squared,
+        title = r"[Experimental] Kinematic Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$DVCS$",
+        grid = True)
+    plot_customization_cff_h_versus_t_and_q_squared.add_3d_scatter_plot(
+        x_data = -global_fit_data_unique_kinematic_sets['t'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['ReH_pred'],
+        color = 'red',
+        marker = '.')
+    for t, Q, cff_value in zip(-global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['ReH_pred']):
+        plot_customization_cff_h_versus_t_and_q_squared.add_line_plot([t, t], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_e_versus_t_and_q_squared.add_3d_scatter_plot(
+        x_data = -global_fit_data_unique_kinematic_sets['t'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['ReE_pred'],
+        color = 'red',
+        marker = '.')
+    for t, Q, cff_value in zip(-global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['ReE_pred']):
+        plot_customization_cff_e_versus_t_and_q_squared.add_line_plot([t, t], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_ht_versus_t_and_q_squared.add_3d_scatter_plot(
+        x_data = -global_fit_data_unique_kinematic_sets['t'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['ReHt_pred'],
+        color = 'red',
+        marker = '.')
+    for t, Q, cff_value in zip(-global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['ReHt_pred']):
+        plot_customization_cff_ht_versus_t_and_q_squared.add_line_plot([t, t], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    plot_customization_cff_dvcs_versus_t_and_q_squared.add_3d_scatter_plot(
+        x_data = -global_fit_data_unique_kinematic_sets['t'],
+        y_data = global_fit_data_unique_kinematic_sets['QQ'],
+        z_data = global_fit_data_unique_kinematic_sets['dvcs_pred'],
+        color = 'red',
+        marker = '.')
+    for t, Q, cff_value in zip(-global_fit_data_unique_kinematic_sets['t'], global_fit_data_unique_kinematic_sets['QQ'], global_fit_data_unique_kinematic_sets['dvcs_pred']):
+        plot_customization_cff_dvcs_versus_t_and_q_squared.add_line_plot([t, t], [Q, Q], [0, cff_value], color='#fa9696', linestyle='dashed')
+    figure_instance_cff_h_versus_t_and_q_squared.savefig(f"cff_real_h_vs_t_and_q_squared_v{_version_number}.png")
+    figure_instance_cff_e_versus_t_and_q_squared.savefig(f"cff_real_e_vs_t_and_q_squared_v{_version_number}.png")
+    figure_instance_cff_ht_versus_t_and_q_squared.savefig(f"cff_real_ht_vs_t_and_q_squared_v{_version_number}.png")
+    figure_instance_cff_dvcs_versus_t_and_q_squared.savefig(f"cff_real_dvcs_t_and_q_squared_v{_version_number}.png")
+    plt.close()
 
     run_global_fit_replica_method(
         number_of_replicas = 5,
@@ -999,78 +1239,44 @@ def run():
     import pysr
     from pysr import PySRRegressor
 
-    cross_section_model = tf.keras.models.load_model(f"replica_number_1_v{_version_number}.keras")
-    cff_tf_model = tf.keras.Model(
-                inputs = cross_section_model.input,
-                outputs = cross_section_model.get_layer('cff_output_layer').output)
+    # cross_section_model = tf.keras.models.load_model(f"replica_number_1_v{_version_number}.keras")
+    # cff_tf_model = tf.keras.Model(
+    #             inputs = cross_section_model.input,
+    #             outputs = cross_section_model.get_layer('cff_output_layer').output)
             
-    if SETTING_DEBUG:
-        print("> Successfully retrieved CFF submodel!")
+    # if SETTING_DEBUG:
+    #     print("> Successfully retrieved CFF submodel!")
 
-    X_train = np.column_stack([
-        data_file['k'],
-        data_file['QQ'],
-        data_file['x_b'],
-        data_file['t'],
-        data_file['phi_x']
-        ])
-    Y_train_cffs = cff_tf_model.predict(prediction_inputs)
-    Y_train_cross_section = cross_section_model.predict(prediction_inputs)   
+    # X_train = np.column_stack([
+    #     data_file['k'],
+    #     data_file['QQ'],
+    #     data_file['x_b'],
+    #     data_file['t'],
+    #     data_file['phi_x']
+    #     ])
+    # Y_train_cffs = cff_tf_model.predict(prediction_inputs)
+    # Y_train_cross_section = cross_section_model.predict(prediction_inputs)   
 
-    cff_model = PySRRegressor(
-    niterations=1000,  # Adjust based on complexity
-    binary_operators=["+", "-", "*", "/"],  # Allowed operations
-    unary_operators=["exp", "log", "sin", "cos"],  # Allowed functions
-    extra_sympy_mappings={},  # Custom functions if needed
-    model_selection="best",  # Choose the simplest best-performing model
-    progress=True,)
+    # cff_model = PySRRegressor(
+    # niterations=1000,  # Adjust based on complexity
+    # binary_operators=["+", "-", "*", "/"],  # Allowed operations
+    # unary_operators=["exp", "log", "sin", "cos"],  # Allowed functions
+    # extra_sympy_mappings={},  # Custom functions if needed
+    # model_selection="best",  # Choose the simplest best-performing model
+    # progress=True,)
 
-    cff_model.fit(X_train, Y_train_cffs)  # Fit symbolic regression model
+    # cff_model.fit(X_train, Y_train_cffs)  # Fit symbolic regression model
 
-    X_train_extended = np.hstack([X_train, Y_train_cffs])  # Append CFFs as additional inputs
+    # X_train_extended = np.hstack([X_train, Y_train_cffs])  # Append CFFs as additional inputs
+
+    global_fit_dnn_model = tf.keras.models.load_model(f"global_fit_replica_number_1_v{_version_number}.keras")
 
     cross_section_model = PySRRegressor(
         niterations=1000,
         binary_operators=["+", "-", "*", "/"],
         unary_operators=["exp", "log", "sin", "cos"],
         model_selection="best",
-        progress=True,
-    )
-
-    cross_section_model.fit(X_train_extended, Y_train_cross_section)
-
-    print("Discovered formulas for CFFs:")
-    print(cff_model)
-
-    print("\nDiscovered formula for the cross section:")
-    print(cross_section_model)
-    
-    # Predict CFFs
-    Y_pred_cffs = cff_model.predict(X_train)
-
-    # Predict cross section
-    Y_pred_cross_section = cross_section_model.predict(X_train_extended)
-
-    # Plot CFFs
-    for i in range(4):
-        plt.figure(figsize=(6,4))
-        plt.scatter(Y_train_cffs[:, i], Y_pred_cffs[:, i], alpha=0.5)
-        plt.xlabel("True CFF Value")
-        plt.ylabel("Predicted CFF Value")
-        plt.title(f"CFF {i+1}: True vs. Predicted")
-        plt.plot([min(Y_train_cffs[:, i]), max(Y_train_cffs[:, i])], 
-                [min(Y_train_cffs[:, i]), max(Y_train_cffs[:, i])], 'r--')
-        plt.show()
-
-    # Plot Cross Section
-    plt.figure(figsize=(6,4))
-    plt.scatter(Y_train_cross_section, Y_pred_cross_section, alpha=0.5)
-    plt.xlabel("True Cross Section")
-    plt.ylabel("Predicted Cross Section")
-    plt.title("Cross Section: True vs. Predicted")
-    plt.plot([min(Y_train_cross_section), max(Y_train_cross_section)], 
-            [min(Y_train_cross_section), max(Y_train_cross_section)], 'r--')
-    plt.show()
+        progress=True)
     
 
 if __name__ == "__main__":
