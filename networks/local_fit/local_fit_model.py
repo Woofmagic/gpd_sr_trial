@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Concatenate, Dense, Lambda
 from tensorflow.keras.models import Model
 
-class F_calc:
+class cross_section_calculation:
     def __init__(self):
         self.module = BHDVCStf()
 
@@ -306,7 +306,6 @@ class TotalFLayer(tf.keras.layers.Layer):
     def call(self, inputs):
         return self.f.curve_fit(inputs[:, 0:5], inputs[:, 5:9]) # QQ, x, t, phi, k, cff1, cff2, cff3, cff4
   
-
 def local_fit_model():
     """Creates and returns a fresh instance of the neural network model."""
     initializer = tf.keras.initializers.RandomUniform(
