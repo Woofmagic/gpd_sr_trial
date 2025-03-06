@@ -639,7 +639,7 @@ def run():
     plt.close()
     
     # for kinematic_set_number in kinematic_sets:
-    for kinematic_set_number in [1.0]:
+    for kinematic_set_number in [1.0, 2.0, 3.0, 4.0]:
 
         if SETTING_VERBOSE:
             print(f"> Now running kinematic set number {kinematic_set_number}...")
