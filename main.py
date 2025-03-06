@@ -1,4 +1,7 @@
+import os
+import re
 import datetime
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -8,10 +11,10 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import Axes, rc_context
 plt.rcParams.update(plt.rcParamsDefault)
 
-_version_number = 1
-
 from networks.local_fit.local_fit_model import local_fit_model
 from networks.global_fit.global_fit_model import global_fit_model
+
+_version_number = 0.
 
 class PlotCustomizer:
     """Later description"""
@@ -538,21 +541,51 @@ def density_scatter(x, y, ax, bins = 50, cmap='viridis'):
     scatter = ax.scatter(x, y, c = density, cmap = cmap, s = 10, alpha = 1.0, edgecolor = 'none')
     return scatter
 
+def get_next_version(base_path: str) -> str:
+    """
+    Scans the base_path (e.g., 'science/analysis/' or 'science/data/') to find the highest version_x directory,
+    then returns the next version path.
+    """
+
+    if not os.path.exists(base_path):
+        os.makedirs(base_path)  # Ensure the base path exists
+    
+    # Regex to match 'version_x' pattern
+    version_pattern = re.compile(r'version_(\d+)')
+    
+    existing_versions = []
+    for entry in os.listdir(base_path):
+        match = version_pattern.match(entry)
+        if match:
+            existing_versions.append(int(match.group(1)))
+    
+    next_version = max(existing_versions, default=-1) + 1
+    return next_version
+    # return os.path.join(base_path, f'version_{next_version}')
+
 def run():
+    
+    _PATH_SCIENCE_ANALYSIS = 'science/analysis/'
+    _PATH_SCIENCE_DATA = 'science/data'
 
-    try:
-        # tf.config.set_visible_devices([],'GPU')
-        tensorflow_found_devices = tf.config.list_physical_devices()
+    # Get next version directories
+    _version_number = get_next_version(_PATH_SCIENCE_ANALYSIS)
 
-        if len(tf.config.list_physical_devices()) != 0:
-            for device in tensorflow_found_devices:
-                print(f"> TensorFlow detected device: {device}")
+    print(f"> Determined next analysis directory: {_version_number}")
 
-        else:
-            print("> TensorFlow didn't find CPUs or GPUs...")
+    # try:
+    #     # tf.config.set_visible_devices([],'GPU')
+    #     tensorflow_found_devices = tf.config.list_physical_devices()
 
-    except Exception as error:
-        print(f"> TensorFlow could not find devices due to error:\n> {error}")
+    #     if len(tf.config.list_physical_devices()) != 0:
+    #         for device in tensorflow_found_devices:
+    #             print(f"> TensorFlow detected device: {device}")
+
+    #     else:
+    #         print("> TensorFlow didn't find CPUs or GPUs...")
+
+    # except Exception as error:
+    #     print(f"> TensorFlow could not find devices due to error:\n> {error}")
     
     DATA_FILE_NAME = "data.csv"
     data_file = pd.read_csv(DATA_FILE_NAME)
@@ -622,8 +655,6 @@ def run():
 
     available_kinematic_sets = [1, 2, 3, 4]
     for available_kinematic_set in available_kinematic_sets:
-
-        import os
 
         if SETTING_VERBOSE:
             print(f"> Now generating .csv files for kinematic set #{available_kinematic_set}...")
