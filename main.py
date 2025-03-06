@@ -393,7 +393,11 @@ def split_data(x_data, y_data, y_error_data, split_percentage = 0.1):
 
     return train_X, test_X, train_y, test_y, train_yerr, test_yerr
 
-def generate_replica_data(pandas_dataframe: pd.DataFrame, mean_value_column_name: str, stddev_column_name: str):
+def generate_replica_data(
+        pandas_dataframe: pd.DataFrame,
+        mean_value_column_name: str,
+        stddev_column_name: str,
+        new_column_name: str):
     """Generates a replica dataset by sampling F within sigmaF."""
     pseudodata_dataframe = pandas_dataframe.copy()
 
@@ -401,13 +405,15 @@ def generate_replica_data(pandas_dataframe: pd.DataFrame, mean_value_column_name
     pseudodata_dataframe[stddev_column_name] = np.abs(pandas_dataframe[stddev_column_name])
 
     # Generate normally distributed F values
-    replica_cross_section_sample = np.random.normal(loc = pandas_dataframe[mean_value_column_name], scale = pseudodata_dataframe[stddev_column_name])
+    replica_cross_section_sample = np.random.normal(
+        loc = pandas_dataframe[mean_value_column_name], 
+        cale = pseudodata_dataframe[stddev_column_name])
 
     # Prevent negative values (ensuring no infinite loops)
     pseudodata_dataframe[mean_value_column_name] = np.maximum(replica_cross_section_sample, 0)
 
     # Store original F values
-    pseudodata_dataframe['True_F'] = pandas_dataframe[mean_value_column_name]
+    pseudodata_dataframe[new_column_name] = pandas_dataframe[mean_value_column_name]
 
     return pseudodata_dataframe
 
@@ -428,7 +434,8 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
         pseudodata_dataframe = generate_replica_data(
             pandas_dataframe = this_replica_data_set,
             mean_value_column_name = 'F',
-            stddev_column_name = 'sigmaF')
+            stddev_column_name = 'sigmaF',
+            new_column_name = 'True_F')
 
         training_x_data, testing_x_data, training_y_data, testing_y_data, training_y_error, testing_y_error = split_data(
             x_data = pseudodata_dataframe[['QQ', 'x_b', 't', 'phi_x', 'k']],
@@ -469,7 +476,7 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
         start_time_in_milliseconds = datetime.datetime.now().replace(microsecond = 0)
         print(f"> Replica #{replica_index + 1} now running...")
 
-        history_of_training_7 = tensorflow_network.fit(
+        history_of_training = tensorflow_network.fit(
             training_x_data,
             training_y_data,
             validation_data = (testing_x_data, testing_y_data),
@@ -481,8 +488,8 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
             batch_size = BATCH_SIZE,
             verbose = SETTING_DNN_TRAINING_VERBOSE)
         
-        training_loss_data = history_of_training_7.history['loss']
-        validation_loss_data = history_of_training_7.history['val_loss']
+        training_loss_data = history_of_training.history['loss']
+        validation_loss_data = history_of_training.history['val_loss']
 
         try:
             tensorflow_network.save(f"replica_number_{replica_index + 1}_v{_version_number}.keras")
@@ -533,8 +540,186 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
         figure_instance_nn_loss.savefig(f"loss_replica_{replica_index + 1}_v{_version_number}.png")
         plt.close()
 
-# Function to compute density and scatter points
-def density_scatter(x, y, ax, bins = 50, cmap='viridis'):
+def run_global_fit_replica_method(number_of_replicas, model_builder, data_file, kinematic_set_number):
+
+    if SETTING_VERBOSE:
+        print(f"> Beginning Replica Method with {number_of_replicas} total Replicas...")
+
+    for replica_index in range(number_of_replicas):
+
+        if SETTING_VERBOSE:
+            print(f"> Now initializing replica #{replica_index + 1}...")
+
+        tensorflow_network = model_builder()
+
+        # Apply Gaussian sampling for each unique 'set'
+        data_file['ReH_pseudo_mean'] = np.random.normal(
+            loc = data_file['ReH_pred'],
+            scale = data_file['ReH_std'])
+
+        data_file['ReE_pseudo_mean'] = np.random.normal(
+            loc = data_file['ReE_pred'],
+            scale = data_file['ReE_std'])
+
+        data_file['ReHt_pseudo_mean'] = np.random.normal(
+            loc = data_file['ReHt_pred'],
+            scale = data_file['ReHt_std'])
+
+        data_file['dvcs_pseudo_mean'] = np.random.normal(
+            loc = data_file['dvcs_pred'],
+            scale = data_file['dvcs_std'])
+
+        data_file.to_csv(f'global_fit_replica_{replica_index + 1}_data_v{_version_number}.csv', index = False)
+
+
+        training_x_data, testing_x_data, training_y_data, testing_y_data, training_y_error, testing_y_error = split_data(
+            x_data = data_file[['QQ', 'x_b', 't']],
+            y_data = data_file['ReH_pseudo_mean', 'ReE_pseudo_mean', 'ReHt_pseudo_mean', 'dvcs_pseudo_mean'],
+            y_error_data = data_file['sigmaF'],
+            split_percentage = 0.1)
+        
+        figure_cff_real_h_histogram = plt.figure(figsize = (18, 6))
+        axis_instance_cff_h_histogram = figure_cff_real_h_histogram.add_subplot(1, 1, 1)
+        plot_customization_cff_h_histogram = PlotCustomizer(
+            axis_instance_cff_h_histogram,
+            title = r"CFF Pseudodata Sampling Sanity Check")
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'],
+            y_data = data_file['ReH_pred'],
+            x_errorbars = np.zeros(data_file['set'].shape),
+            y_errorbars = data_file['ReH_std'],
+            label = r'Data from Local Fits Re[H]',
+            color = "#ff6b63",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'] + 0.1,
+            y_data = data_file['ReE_pred'],
+            x_errorbars = np.zeros(data_file['set'].shape),
+            y_errorbars = data_file['ReE_std'],
+            label = r'Data from Local Fits Re[E]',
+            color = "#ffb663",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'] + 0.2,
+            y_data = data_file['ReHt_pred'],
+            x_errorbars = np.zeros(data_file['set'].shape),
+            y_errorbars = data_file['ReHt_std'],
+            label = r'Data from Local Fits Re[Ht]',
+            color = "#63ff87",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'] + 0.3,
+            y_data = data_file['dvcs_pred'],
+            x_errorbars = np.zeros(data_file['set'].shape),
+            y_errorbars = data_file['dvcs_std'],
+            label = r'Data from Local Fits DVCS',
+            color = "#6392ff",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'],
+            y_data = data_file['ReH_pseudo_mean'],
+            x_errorbars = np.zeros(data_file['ReH_pseudo_mean'].shape),
+            y_errorbars = np.zeros(data_file['ReH_pseudo_mean'].shape),
+            label = r'Replica Data for Re[H]',
+            color = "red",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'] + 0.1,
+            y_data = data_file['ReE_pseudo_mean'],
+            x_errorbars = np.zeros(data_file['ReE_pseudo_mean'].shape),
+            y_errorbars = np.zeros(data_file['ReE_pseudo_mean'].shape),
+            label = r'Replica Data for Re[E]',
+            color = "orange",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'] + 0.2,
+            y_data = data_file['ReHt_pseudo_mean'],
+            x_errorbars = np.zeros(data_file['ReHt_pseudo_mean'].shape),
+            y_errorbars = np.zeros(data_file['ReHt_pseudo_mean'].shape),
+            label = r'Replica Data for Re[Ht]',
+            color = "limegreen",)
+
+        plot_customization_cff_h_histogram.add_errorbar_plot(
+            x_data = data_file['set'] + 0.3,
+            y_data = data_file['dvcs_pseudo_mean'],
+            x_errorbars = np.zeros(data_file['dvcs_pseudo_mean'].shape),
+            y_errorbars = np.zeros(data_file['dvcs_pseudo_mean'].shape),
+            label = r'Replica Data for DVCS',
+            color = "blue",)
+
+        figure_cff_real_h_histogram.savefig(f"global_fit_cff_sampling_replica_{replica_index + 1}_v{_version_number}.png")
+        plt.close()
+        
+        start_time_in_milliseconds = datetime.datetime.now().replace(microsecond = 0)
+        print(f"> Replica #{replica_index + 1} now running...")
+
+        history_of_training = tensorflow_network.fit(
+            training_x_data,
+            training_y_data,
+            validation_data = (testing_x_data, testing_y_data),
+            epochs = EPOCHS,
+            callbacks = [
+                tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor = modify_LR_factor, patience = modify_LR_patience, mode = 'auto'),
+                tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = EarlyStop_patience)
+            ],
+            batch_size = BATCH_SIZE,
+            verbose = SETTING_DNN_TRAINING_VERBOSE)
+        
+        training_loss_data = history_of_training.history['loss']
+        validation_loss_data = history_of_training.history['val_loss']
+
+        try:
+            tensorflow_network.save(f"global_fit_replica_number_{replica_index + 1}_v{_version_number}.keras")
+            print("> Saved replica!" )
+
+        except Exception as error:
+            print(f"> Unable to save Replica model replica_number_{replica_index + 1}_v{_version_number}.keras:\n> {error}")
+    
+        end_time_in_milliseconds = datetime.datetime.now().replace(microsecond = 0)
+        print(f"> Replica job #{replica_index + 1} finished in {end_time_in_milliseconds - start_time_in_milliseconds}ms.")
+        
+        # (1): Set up the Figure instance
+        figure_instance_nn_loss = plt.figure(figsize = (18, 6))
+
+        # (2): Add an Axes Object:
+        axis_instance_nn_loss = figure_instance_nn_loss.add_subplot(1, 1, 1)
+        
+        plot_customization_nn_loss = PlotCustomizer(
+            axis_instance_nn_loss,
+            title = "Neural Network Loss",
+            xlabel = "Epoch",
+            ylabel = "Loss")
+        
+        plot_customization_nn_loss.add_line_plot(
+            x_data = np.arange(0, EPOCHS, 1),
+            y_data = np.array([np.max(training_loss_data) for number in training_loss_data]),
+            color = "red",
+            linestyle = ':')
+        
+        plot_customization_nn_loss.add_line_plot(
+            x_data = np.arange(0, EPOCHS, 1),
+            y_data = training_loss_data,
+            label = 'Training Loss',
+            color = "orange")
+        
+        plot_customization_nn_loss.add_line_plot(
+            x_data = np.arange(0, EPOCHS, 1),
+            y_data = validation_loss_data,
+            label = 'Validation Loss',
+            color = "pink")
+        
+        plot_customization_nn_loss.add_line_plot(
+            x_data = np.arange(0, EPOCHS, 1),
+            y_data = np.zeros(shape = EPOCHS),
+            color = "limegreen",
+            linestyle = ':')
+        
+        figure_instance_nn_loss.savefig(f"global_fit_loss_replica_{replica_index + 1}_v{_version_number}.png")
+        plt.close()
+
+
+def density_scatter(x, y, ax, bins = 50, cmap = 'viridis'):
     counts, xedges, yedges = np.histogram2d(x, y, bins=bins)
     xidx = np.digitize(x, xedges[:-1]) - 1
     yidx = np.digitize(y, yedges[:-1]) - 1
@@ -795,7 +980,16 @@ def run():
 
     #### GLOBAL FIT ####
 
+    DATA_GLOBAL_FIT_FILE_NAME = "DNN_projections_1_to_10_no_duplicates.csv"
+    data_global_fit_for_replica_data = pd.read_csv(DATA_GLOBAL_FIT_FILE_NAME)
 
+    global_fit_data_unique_kinematic_sets = data_global_fit_for_replica_data.groupby('set').first().reset_index()
+
+    run_global_fit_replica_method(
+        number_of_replicas = 5,
+        model_builder = local_fit_model,
+        data_file = global_fit_data_unique_kinematic_sets,
+        kinematic_set_number = kinematic_set_number)
 
     #### SR ####
     
