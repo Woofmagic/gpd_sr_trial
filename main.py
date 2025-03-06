@@ -7,7 +7,6 @@ from tensorflow.keras.models import Model
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Axes, rc_context
 plt.rcParams.update(plt.rcParamsDefault)
-import math
 
 _version_number = 1
 
@@ -15,7 +14,7 @@ from networks.local_fit.local_fit_model import local_fit_model
 from networks.global_fit.global_fit_model import global_fit_model
 
 class PlotCustomizer:
-    """FUCK IT"""
+    """Later description"""
     def __init__(
             self, 
             axes: Axes, 
@@ -542,7 +541,7 @@ def density_scatter(x, y, ax, bins = 50, cmap='viridis'):
 def run():
 
     try:
-        tf.config.set_visible_devices([],'GPU')
+        # tf.config.set_visible_devices([],'GPU')
         tensorflow_found_devices = tf.config.list_physical_devices()
 
         if len(tf.config.list_physical_devices()) != 0:
