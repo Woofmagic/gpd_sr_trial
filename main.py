@@ -799,15 +799,6 @@ def run_replica_method(number_of_replicas, model_builder, data_file, kinematic_s
             print(f"> Now initializing replica #{replica_index + 1}...")
 
         tensorflow_network = model_builder()
-        
-        tensorflow_network.compile(
-            optimizer = 'adam',
-            loss = tf.keras.losses.MeanSquaredError(),
-            metrics = [
-                tf.keras.metrics.MeanSquaredError()
-            ])
-        
-        # tensorflow_network.summary()
 
         this_replica_data_set = data_file[data_file['set'] == kinematic_set_number].reset_index(drop = True)
 
