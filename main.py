@@ -540,7 +540,7 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
         figure_instance_nn_loss.savefig(f"loss_replica_{replica_index + 1}_v{_version_number}.png")
         plt.close()
 
-def run_global_fit_replica_method(number_of_replicas, model_builder, data_file, kinematic_set_number):
+def run_global_fit_replica_method(number_of_replicas, model_builder, data_file):
 
     if SETTING_VERBOSE:
         print(f"> Beginning Replica Method with {number_of_replicas} total Replicas...")
@@ -551,6 +551,8 @@ def run_global_fit_replica_method(number_of_replicas, model_builder, data_file, 
             print(f"> Now initializing replica #{replica_index + 1}...")
 
         tensorflow_network = model_builder()
+        print(data_file['ReH_pred'])
+        data_file = data_file.copy()
 
         # Apply Gaussian sampling for each unique 'set'
         data_file['ReH_pseudo_mean'] = np.random.normal(
@@ -571,11 +573,10 @@ def run_global_fit_replica_method(number_of_replicas, model_builder, data_file, 
 
         data_file.to_csv(f'global_fit_replica_{replica_index + 1}_data_v{_version_number}.csv', index = False)
 
-
         training_x_data, testing_x_data, training_y_data, testing_y_data, training_y_error, testing_y_error = split_data(
             x_data = data_file[['QQ', 'x_b', 't']],
-            y_data = data_file['ReH_pseudo_mean', 'ReE_pseudo_mean', 'ReHt_pseudo_mean', 'dvcs_pseudo_mean'],
-            y_error_data = data_file['sigmaF'],
+            y_data = data_file[['ReH_pseudo_mean', 'ReE_pseudo_mean', 'ReHt_pseudo_mean', 'dvcs_pseudo_mean']],
+            y_error_data = data_file[['ReH_std', 'ReE_std', 'ReHt_std', 'dvcs_std']],
             split_percentage = 0.1)
         
         figure_cff_real_h_histogram = plt.figure(figsize = (18, 6))
@@ -825,158 +826,161 @@ def run():
     plt.close()
     
     # for kinematic_set_number in kinematic_sets:
-    RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
-    for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
+    # RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
+    # for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
 
-        if SETTING_VERBOSE:
-            print(f"> Now running kinematic set number {kinematic_set_number}...")
+    #     if SETTING_VERBOSE:
+    #         print(f"> Now running kinematic set number {kinematic_set_number}...")
 
-        run_local_fit_replica_method(
-            number_of_replicas = 5,
-            model_builder = local_fit_model,
-            data_file = data_file,
-            kinematic_set_number = kinematic_set_number)
+    #     run_local_fit_replica_method(
+    #         number_of_replicas = 5,
+    #         model_builder = local_fit_model,
+    #         data_file = data_file,
+    #         kinematic_set_number = kinematic_set_number)
 
-        if SETTING_VERBOSE:
-            print(f"> Finished running Replica Method on kinematic set number {kinematic_set_number}!")
+    #     if SETTING_VERBOSE:
+    #         print(f"> Finished running Replica Method on kinematic set number {kinematic_set_number}!")
 
-    available_kinematic_sets = [1, 2, 3, 4]
-    for available_kinematic_set in available_kinematic_sets:
+    # available_kinematic_sets = [1, 2, 3, 4]
+    # for available_kinematic_set in available_kinematic_sets:
 
-        if SETTING_VERBOSE:
-            print(f"> Now generating .csv files for kinematic set #{available_kinematic_set}...")
+    #     if SETTING_VERBOSE:
+    #         print(f"> Now generating .csv files for kinematic set #{available_kinematic_set}...")
 
-        try:
-            model_paths = [os.path.join(os.getcwd(), file) for file in os.listdir(os.getcwd()) if file.endswith(f"v{_version_number}.keras")]
-            if SETTING_DEBUG:
-                print(f"> Successfully  captured {len(model_paths)} in list for iteration.")
+    #     try:
+    #         model_paths = [os.path.join(os.getcwd(), file) for file in os.listdir(os.getcwd()) if file.endswith(f"v{_version_number}.keras")]
+    #         if SETTING_DEBUG:
+    #             print(f"> Successfully  captured {len(model_paths)} in list for iteration.")
 
-        except Exception as error:
-            print(f" Error in capturing replicas in list:\n> {error}")
-            sys.exit(0)
+    #     except Exception as error:
+    #         print(f" Error in capturing replicas in list:\n> {error}")
+    #         sys.exit(0)
 
-        if SETTING_VERBOSE:
-            print(f"> Obtained {len(model_paths)} models.")
+    #     if SETTING_VERBOSE:
+    #         print(f"> Obtained {len(model_paths)} models.")
 
-        dataframe_restricted_to_current_kinematic_set = data_file[data_file['set'] == available_kinematic_set]
-        dataframe_restricted_to_current_kinematic_set = dataframe_restricted_to_current_kinematic_set
+    #     dataframe_restricted_to_current_kinematic_set = data_file[data_file['set'] == available_kinematic_set]
+    #     dataframe_restricted_to_current_kinematic_set = dataframe_restricted_to_current_kinematic_set
 
-        prediction_inputs = dataframe_restricted_to_current_kinematic_set[['QQ', 'x_b', 't', 'phi_x', 'k']].to_numpy()
-        real_cross_section_values = dataframe_restricted_to_current_kinematic_set['F'].values
-        phi_values = dataframe_restricted_to_current_kinematic_set['phi_x'].values
+    #     prediction_inputs = dataframe_restricted_to_current_kinematic_set[['QQ', 'x_b', 't', 'phi_x', 'k']].to_numpy()
+    #     real_cross_section_values = dataframe_restricted_to_current_kinematic_set['F'].values
+    #     phi_values = dataframe_restricted_to_current_kinematic_set['phi_x'].values
     
-        # These contain *per replica* predictions
-        predictions_for_cross_section = []
-        predictions_for_cffs = []
+    #     # These contain *per replica* predictions
+    #     predictions_for_cross_section = []
+    #     predictions_for_cffs = []
 
-        predictions_for_cross_section_average = []
-        predictions_for_cffs_average = []
-        predictions_for_cross_section_std_dev = []
+    #     predictions_for_cross_section_average = []
+    #     predictions_for_cffs_average = []
+    #     predictions_for_cross_section_std_dev = []
 
-        for replica_models in model_paths:
+    #     for replica_models in model_paths:
 
-            if SETTING_VERBOSE:
-                print(f"> Now making predictions with replica model: {str(replica_models)}")
+    #         if SETTING_VERBOSE:
+    #             print(f"> Now making predictions with replica model: {str(replica_models)}")
     
-            # This just loads a TF model file:
-            cross_section_model = tf.keras.models.load_model(replica_models, custom_objects = {'TotalFLayer': TotalFLayer})
+    #         # This just loads a TF model file:
+    #         cross_section_model = tf.keras.models.load_model(replica_models, custom_objects = {'TotalFLayer': TotalFLayer})
             
-            if SETTING_DEBUG:
-                print("> Successfully loaded cross section model!")
+    #         if SETTING_DEBUG:
+    #             print("> Successfully loaded cross section model!")
 
-            # This defines a *new* TF model:
-            cff_model = tf.keras.Model(
-                inputs = cross_section_model.input,
-                outputs = cross_section_model.get_layer('cff_output_layer').output)
+    #         # This defines a *new* TF model:
+    #         cff_model = tf.keras.Model(
+    #             inputs = cross_section_model.input,
+    #             outputs = cross_section_model.get_layer('cff_output_layer').output)
             
-            if SETTING_DEBUG:
-                print("> Successfully CFF submodel!")
+    #         if SETTING_DEBUG:
+    #             print("> Successfully CFF submodel!")
 
-            predicted_cffs = cff_model.predict(prediction_inputs)
-            predicted_cross_sections = cross_section_model.predict(prediction_inputs)
+    #         predicted_cffs = cff_model.predict(prediction_inputs)
+    #         predicted_cross_sections = cross_section_model.predict(prediction_inputs)
 
-            predictions_for_cross_section.append(predicted_cffs)
-            predictions_for_cffs.append(predicted_cross_sections)
+    #         predictions_for_cross_section.append(predicted_cffs)
+    #         predictions_for_cffs.append(predicted_cross_sections)
 
-        for azimuthal_angle in range(len(phi_values)):
+    #     for azimuthal_angle in range(len(phi_values)):
 
-            if SETTING_DEBUG:
-                print(f"> Now analyzing averages at azimuthal angle of {azimuthal_angle} degrees...")
+    #         if SETTING_DEBUG:
+    #             print(f"> Now analyzing averages at azimuthal angle of {azimuthal_angle} degrees...")
 
-            cross_section_at_given_phi = [sigma[azimuthal_angle] for sigma in predictions_for_cross_section]
-            predictions_for_cross_section_average.append(np.mean(cross_section_at_given_phi))
-            predictions_for_cross_section_std_dev.append(np.std(cross_section_at_given_phi))
+    #         cross_section_at_given_phi = [sigma[azimuthal_angle] for sigma in predictions_for_cross_section]
+    #         predictions_for_cross_section_average.append(np.mean(cross_section_at_given_phi))
+    #         predictions_for_cross_section_std_dev.append(np.std(cross_section_at_given_phi))
             
-        predictions_for_cross_section_average = np.array(predictions_for_cross_section_average)
-        predictions_for_cross_section_std_dev = np.array(predictions_for_cross_section_std_dev)
+    #     predictions_for_cross_section_average = np.array(predictions_for_cross_section_average)
+    #     predictions_for_cross_section_std_dev = np.array(predictions_for_cross_section_std_dev)
 
-        chi_squared_error = np.sum(((real_cross_section_values - predictions_for_cross_section_average) / predictions_for_cross_section_std_dev) ** 2)
-        chi_square_file = "chi2.txt"
-        if not os.path.exists(chi_square_file):
-            with open(chi_square_file, 'w') as file:
-                file.write("Kinematic Set\tChi-Square Error\n")  # Write header if the file doesn't exist
-        # Append chi-square error data to the file
-        with open(chi_square_file, 'a') as file:
-            file.write(f"{available_kinematic_set}\t{chi_squared_error:.4f}\n")
-        print(f"Kinematic Set {available_kinematic_set}: Chi-Square Error = {chi_squared_error:.4f}")
+    #     chi_squared_error = np.sum(((real_cross_section_values - predictions_for_cross_section_average) / predictions_for_cross_section_std_dev) ** 2)
+    #     chi_square_file = "chi2.txt"
+    #     if not os.path.exists(chi_square_file):
+    #         with open(chi_square_file, 'w') as file:
+    #             file.write("Kinematic Set\tChi-Square Error\n")  # Write header if the file doesn't exist
+    #     # Append chi-square error data to the file
+    #     with open(chi_square_file, 'a') as file:
+    #         file.write(f"{available_kinematic_set}\t{chi_squared_error:.4f}\n")
+    #     print(f"Kinematic Set {available_kinematic_set}: Chi-Square Error = {chi_squared_error:.4f}")
 
-        f_vs_phi_data = {
-            'azimuthal_phi': phi_values,
-            'cross_section': real_cross_section_values,
-            'cross_section_average_prediction': predictions_for_cross_section_average,
-            'cross_section_std_dev_prediction': predictions_for_cross_section_std_dev
-        }
+    #     f_vs_phi_data = {
+    #         'azimuthal_phi': phi_values,
+    #         'cross_section': real_cross_section_values,
+    #         'cross_section_average_prediction': predictions_for_cross_section_average,
+    #         'cross_section_std_dev_prediction': predictions_for_cross_section_std_dev
+    #     }
 
-        f_vs_phi_df = pd.DataFrame(f_vs_phi_data)
-        f_vs_phi_df.to_csv('fuczzzk.csv', index=False)
+    #     f_vs_phi_df = pd.DataFrame(f_vs_phi_data)
+    #     f_vs_phi_df.to_csv('fuczzzk.csv', index=False)
 
-        # (1): Set up the Figure instance
-        figure_cff_real_h_histogram = plt.figure(figsize = (18, 6))
-        axis_instance_cff_h_histogram = figure_cff_real_h_histogram.add_subplot(1, 1, 1)
-        plot_customization_cff_h_histogram = PlotCustomizer(
-            axis_instance_cff_h_histogram,
-            title = r"Predictions for $Re \left(H \right)$")
-        plot_customization_cff_h_histogram.add_bar_plot(
-            x_data = np.array(predictions_for_cffs)[:, :, 1].T.flatten(),
-            bins = 20,
-            label = "Histogram Bars",
-            color = "lightblue",
-            use_histogram = True)
-        figure_cff_real_h_histogram.savefig(f"shit_v{_version_number}.png")
-        plt.close()
-        # cff_real_E_histogram = plt.figure(figsize = (18, 6))
-        # cff_real_Ht_histogram = plt.figure(figsize = (18, 6))
-        # cff_dvcs_histogram = plt.figure(figsize = (18, 6))
-    
-        
-
-            # # (1): Set up the Figure instance
-            # figure_instance_fitting = plt.figure(figsize = (18, 6))
-
-            # # (2): Add an Axes Object:
-            # axis_instance_fitting = figure_instance_fitting.add_subplot(1, 1, 1)
-            
-            # plot_customization_data_comparison = PlotCustomizer(
-            #     axis_instance_fitting,
-            #     title = r"Replica Fitting",
-            #     xlabel = r"\phi",
-            #     ylabel = r"\sigma")
-            
-            # plot_customization_predictions.add_errorbar_plot(
-            #     x_data = this_replica_data_set['phi_x'],
-            #     y_data = this_replica_data_set['F'],
-            #     x_errorbars = np.zeros(this_replica_data_set['sigmaF'].shape),
-            #     y_errorbars = this_replica_data_set['sigmaF'],
-            #     label = r'Raw Data',
-            #     color = "black")
-            
-            # plot_customization_data_comparison.add_scatter_plot(
-            #     x_data = np.linspace(0, 361, 1),
-            #     y_data = model_predictions,
-            #     label = r'Model Predictions',
-            #     color = "orange")
-            
-            # figure_instance_fitting.savefig(f"fitting{replica_index+1}_v{_version_number}.png")
+    #     # (1): Set up the Figure instance
+    #     figure_cff_real_h_histogram = plt.figure(figsize = (18, 6))
+    #     figure_cff_real_e_histogram = plt.figure(figsize = (18, 6))
+    #     figure_cff_real_ht_histogram = plt.figure(figsize = (18, 6))
+    #     figure_cff_dvcs_histogram = plt.figure(figsize = (18, 6))
+    #     axis_instance_cff_h_histogram = figure_cff_real_h_histogram.add_subplot(1, 1, 1)
+    #     axis_instance_cff_e_histogram = figure_cff_real_e_histogram.add_subplot(1, 1, 1)
+    #     axis_instance_cff_ht_histogram = figure_cff_real_ht_histogram.add_subplot(1, 1, 1)
+    #     axis_instance_cff_dvcs_histogram = figure_cff_dvcs_histogram.add_subplot(1, 1, 1)
+    #     plot_customization_cff_h_histogram = PlotCustomizer(
+    #         axis_instance_cff_h_histogram,
+    #         title = r"Predictions for $Re \left(H \right)$")
+    #     plot_customization_cff_e_histogram = PlotCustomizer(
+    #         axis_instance_cff_e_histogram,
+    #         title = r"Predictions for $Re \left(E \right)$")
+    #     plot_customization_cff_ht_histogram = PlotCustomizer(
+    #         axis_instance_cff_ht_histogram,
+    #         title = r"Predictions for $Re \left(\tilde{H} \right)$")
+    #     plot_customization_cff_dvcs_histogram = PlotCustomizer(
+    #         axis_instance_cff_dvcs_histogram,
+    #         title = r"Predictions for $DVCS$")
+    #     plot_customization_cff_h_histogram.add_bar_plot(
+    #         x_data = np.array(predictions_for_cffs)[:, :, 1].T.flatten(),
+    #         bins = 20,
+    #         label = "Histogram Bars",
+    #         color = "lightblue",
+    #         use_histogram = True)
+    #     plot_customization_cff_e_histogram.add_bar_plot(
+    #         x_data = np.array(predictions_for_cffs)[:, :, 2].T.flatten(),
+    #         bins = 20,
+    #         label = "Histogram Bars",
+    #         color = "lightblue",
+    #         use_histogram = True)
+    #     plot_customization_cff_ht_histogram.add_bar_plot(
+    #         x_data = np.array(predictions_for_cffs)[:, :, 3].T.flatten(),
+    #         bins = 20,
+    #         label = "Histogram Bars",
+    #         color = "lightblue",
+    #         use_histogram = True)
+    #     plot_customization_cff_dvcs_histogram.add_bar_plot(
+    #         x_data = np.array(predictions_for_cffs)[:, :, 4].T.flatten(),
+    #         bins = 20,
+    #         label = "Histogram Bars",
+    #         color = "lightblue",
+    #         use_histogram = True)
+    #     figure_cff_real_h_histogram.savefig(f"local_fit_cff_real_h_{_version_number}.png")
+    #     figure_cff_real_e_histogram.savefig(f"local_fit_cff_real_e_{_version_number}.png")
+    #     figure_cff_real_ht_histogram.savefig(f"local_fit_cff_real_ht_{_version_number}.png")
+    #     figure_cff_dvcs_histogram.savefig(f"local_fit_cff_dvcs_{_version_number}.png")
+    #     plt.close()
 
     #### GLOBAL FIT ####
 
@@ -987,9 +991,8 @@ def run():
 
     run_global_fit_replica_method(
         number_of_replicas = 5,
-        model_builder = local_fit_model,
-        data_file = global_fit_data_unique_kinematic_sets,
-        kinematic_set_number = kinematic_set_number)
+        model_builder = global_fit_model,
+        data_file = global_fit_data_unique_kinematic_sets)
 
     #### SR ####
     
