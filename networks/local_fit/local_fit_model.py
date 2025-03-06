@@ -1,5 +1,7 @@
 import math
 
+import numpy as np
+
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Concatenate, Dense, Lambda
 from tensorflow.keras.models import Model
