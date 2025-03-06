@@ -47,6 +47,9 @@ _version_number = 1
     
 #     return tfModel
 
+from networks.local_fit.local_fit_model import local_fit_model
+from networks.global_fit.global_fit_model import global_fit_model
+
 class PlotCustomizer:
     """FUCK IT"""
     def __init__(
@@ -959,9 +962,8 @@ def density_scatter(x, y, ax, bins = 50, cmap='viridis'):
 
 def run():
 
-    tf.config.set_visible_devices([],'GPU')
-
     try:
+        tf.config.set_visible_devices([],'GPU')
         tensorflow_found_devices = tf.config.list_physical_devices()
 
         if len(tf.config.list_physical_devices()) != 0:
@@ -1011,7 +1013,7 @@ def run():
     axis_instance_fitting_phase_space = figure_instance_kinematic_phase_space.add_subplot(1, 1, 1, projection = '3d')
     plot_customization_data_comparison = PlotCustomizer(
         axis_instance_fitting_phase_space,
-        title = r"[Experimental] Kinematic Phase Spac",
+        title = r"[Experimental] Kinematic Phase Space",
         xlabel = r"$x_{{B}}$",
         ylabel = r"$Q^{{2}}$",
         zlabel = r"$-t$",
@@ -1033,7 +1035,7 @@ def run():
 
         run_replica_method(
             number_of_replicas = 5,
-            model_builder = build_dnn,
+            model_builder = local_fit_model,
             data_file = data_file,
             kinematic_set_number = kinematic_set_number)
 
