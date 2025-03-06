@@ -465,27 +465,6 @@ def build_global_fitting_dnn():
 
     return tensorflow_network
 
-def circle_dnn():
-    """Creates and returns a fresh instance of the neural network model."""
-    initializer = tf.keras.initializers.RandomUniform(
-        minval = -10.0,
-        maxval = 10.0,
-        seed = None)
-
-    circle_function_input = Input(shape=(3,), name = "spherical_function_inputs")
-
-    x1 = tf.keras.layers.Dense(480, activation="relu6", kernel_initializer=initializer)(circle_function_input)
-    x2 = tf.keras.layers.Dense(320, activation="relu6", kernel_initializer=initializer)(x1)
-    x3 = tf.keras.layers.Dense(240, activation="relu6", kernel_initializer=initializer)(x2)
-    x4 = tf.keras.layers.Dense(120, activation="relu6", kernel_initializer=initializer)(x3)
-    x5 = tf.keras.layers.Dense(32, activation="relu6", kernel_initializer=initializer)(x4)
-
-    output_y_value = Dense(1, activation = "linear", kernel_initializer = initializer, name = "cff_output_layer")(x5)
-
-    tensorflow_network = Model(inputs = circle_function_input, outputs = output_y_value, name = "spherical_function_fitter")
-
-    return tensorflow_network
-
 def run_replica_method(number_of_replicas, model_builder, data_file, kinematic_set_number):
 
     if SETTING_VERBOSE:
@@ -841,6 +820,12 @@ def run():
             
             # figure_instance_fitting.savefig(f"fitting{replica_index+1}_v{_version_number}.png")
 
+    #### GLOBAL FIT ####
+
+
+
+    #### SR ####
+    
     import pysr
     from pysr import PySRRegressor
 
@@ -850,7 +835,7 @@ def run():
                 outputs = cross_section_model.get_layer('cff_output_layer').output)
             
     if SETTING_DEBUG:
-        print("> Successfully CFF submodel!")
+        print("> Successfully retrieved CFF submodel!")
 
     X_train = np.column_stack([
         data_file['k'],
