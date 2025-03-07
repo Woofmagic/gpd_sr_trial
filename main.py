@@ -6,16 +6,14 @@ import datetime
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Concatenate, Dense, Lambda
-from tensorflow.keras.models import Model
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import Axes, rc_context
-plt.rcParams.update(plt.rcParamsDefault)
 
 from networks.local_fit.local_fit_model import local_fit_model
 from networks.global_fit.global_fit_model import global_fit_model
 
 _version_number = 1
+
+from utilities.plot_customizer import PlotCustomizer
             
 SETTING_VERBOSE = True
 SETTING_DEBUG = True
