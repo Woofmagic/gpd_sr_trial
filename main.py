@@ -302,7 +302,7 @@ SETTING_VERBOSE = True
 SETTING_DEBUG = True
 Learning_Rate = 0.001
 EPOCHS = 3000
-BATCH_SIZE_LOCAL_FITS = 20
+BATCH_SIZE_LOCAL_FITS = 10
 BATCH_SIZE_GLOBAL_FITS = 10
 EarlyStop_patience = 1000
 modify_LR_patience = 400
@@ -422,7 +422,7 @@ def generate_replica_data(
     # Generate normally distributed F values
     replica_cross_section_sample = np.random.normal(
         loc = pandas_dataframe[mean_value_column_name], 
-        cale = pseudodata_dataframe[stddev_column_name])
+        scale = pseudodata_dataframe[stddev_column_name])
 
     # Prevent negative values (ensuring no infinite loops)
     pseudodata_dataframe[mean_value_column_name] = np.maximum(replica_cross_section_sample, 0)
@@ -1230,7 +1230,7 @@ def run():
     plt.close()
 
     run_global_fit_replica_method(
-        number_of_replicas = 5,
+        number_of_replicas = 300,
         model_builder = global_fit_model,
         data_file = global_fit_data_unique_kinematic_sets)
 
@@ -1238,6 +1238,8 @@ def run():
     
     import pysr
     from pysr import PySRRegressor
+
+    print('HOLY FUCKING FUCK@\!!!!!!!!!!!!')
 
     # cross_section_model = tf.keras.models.load_model(f"replica_number_1_v{_version_number}.keras")
     # cff_tf_model = tf.keras.Model(
@@ -1269,14 +1271,14 @@ def run():
 
     # X_train_extended = np.hstack([X_train, Y_train_cffs])  # Append CFFs as additional inputs
 
-    global_fit_dnn_model = tf.keras.models.load_model(f"global_fit_replica_number_1_v{_version_number}.keras")
+    # global_fit_dnn_model = tf.keras.models.load_model(f"global_fit_replica_number_1_v{_version_number}.keras")
 
-    cross_section_model = PySRRegressor(
-        niterations=1000,
-        binary_operators=["+", "-", "*", "/"],
-        unary_operators=["exp", "log", "sin", "cos"],
-        model_selection="best",
-        progress=True)
+    # cross_section_model = PySRRegressor(
+    #     niterations=1000,
+    #     binary_operators=["+", "-", "*", "/"],
+    #     unary_operators=["exp", "log", "sin", "cos"],
+    #     model_selection="best",
+    #     progress=True)
     
 
 if __name__ == "__main__":
