@@ -19,7 +19,7 @@ SETTING_VERBOSE = True
 SETTING_DEBUG = True
 Learning_Rate = 0.001
 EPOCHS = 3000
-BATCH_SIZE_LOCAL_FITS = 10
+BATCH_SIZE_LOCAL_FITS = 25
 BATCH_SIZE_GLOBAL_FITS = 10
 EarlyStop_patience = 1000
 modify_LR_patience = 400
@@ -69,7 +69,7 @@ def symbolic_regression(x_data, y_data):
     # (3): The size of each population:
     population_size = 33,
 
-    # (4): Whatever the fuck this means:
+    # (4): Whatever this means:
     ncycles_per_iteration = 550,
 
     # === OBJECTIVE ===
@@ -454,7 +454,6 @@ def run_global_fit_replica_method(number_of_replicas, model_builder, data_file):
         figure_instance_nn_loss.savefig(f"global_fit_loss_replica_{replica_index + 1}_v{_version_number}.png")
         plt.close()
 
-
 def density_scatter(x, y, ax, bins = 50, cmap = 'viridis'):
     counts, xedges, yedges = np.histogram2d(x, y, bins=bins)
     xidx = np.digitize(x, xedges[:-1]) - 1
@@ -483,7 +482,6 @@ def get_next_version(base_path: str) -> str:
     
     next_version = max(existing_versions, default=-1) + 1
     return next_version
-    # return os.path.join(base_path, f'version_{next_version}')
 
 def run():
     
@@ -955,8 +953,6 @@ def run():
     
     import pysr
     from pysr import PySRRegressor
-
-    print('HOLY FUCKING FUCK@\!!!!!!!!!!!!')
 
     # cross_section_model = tf.keras.models.load_model(f"replica_number_1_v{_version_number}.keras")
     # cff_tf_model = tf.keras.Model(
