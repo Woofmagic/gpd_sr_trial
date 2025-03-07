@@ -1,18 +1,16 @@
-# Ignore everything by default
 **
 
-# Allow top-level files explicitly
+**/__pycache__/
+
 !/main.py
 !/.gitignore
 
-# Allow `networks` and `science` but ignore their subdirectories
 !/networks
 /networks/**
 
 !/science
 /science/**
 
-# Ignore all `.csv`, `.png`, and `.txt` files in the top-level directory
 /*.csv
 /*.png
 /*.txt
