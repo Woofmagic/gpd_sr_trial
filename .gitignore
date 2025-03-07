@@ -1,16 +1,10 @@
-**
+
 
 **/__pycache__/
 
-!/main.py
-!/.gitignore
-
-!/networks
 /networks/**
-
-!/science
 /science/**
 
-/*.csv
-/*.png
-/*.txt
+**.csv
+**.png
+**.txt
