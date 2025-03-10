@@ -2,8 +2,10 @@
 
 **/__pycache__/
 
+/networks/**
+
 /science/**
 
-*.csv
-*.png
-*.txt
+**.csv
+**.png
+**.txt
