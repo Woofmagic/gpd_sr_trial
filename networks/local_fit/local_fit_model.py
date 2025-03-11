@@ -1,6 +1,8 @@
 
 import tensorflow as tf
-  
+
+from networks.local_fit.cross_section_layers import TotalFLayer
+
 def local_fit_model():
     """Creates and returns a fresh instance of the neural network model."""
     initializer = tf.keras.initializers.RandomUniform(
@@ -25,7 +27,7 @@ def local_fit_model():
     x4 = tf.keras.layers.Dense(120, activation="relu6", kernel_initializer=initializer)(x3)
     x5 = tf.keras.layers.Dense(32, activation="relu6", kernel_initializer=initializer)(x4)
 
-    outputs = Dense(4, activation="linear", kernel_initializer = initializer, name='cff_output_layer')(x5)
+    outputs = tf.keras.layers.Dense(4, activation="linear", kernel_initializer = initializer, name='cff_output_layer')(x5)
 
     total_cross_section_inputs = tf.keras.layers.concatenate([cross_section_inputs, outputs], axis = 1)
 

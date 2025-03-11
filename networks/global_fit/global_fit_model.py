@@ -31,6 +31,6 @@ def global_fit_model():
                 tf.keras.metrics.MeanSquaredError()
             ])
 
-    tensorflow_network.summary()
+    # tensorflow_network.summary()
     
     return tensorflow_network
