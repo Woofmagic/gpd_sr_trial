@@ -509,6 +509,10 @@ def run():
     
     DATA_FILE_NAME = "data.csv"
     data_file = pd.read_csv(DATA_FILE_NAME)
+
+    if SETTING_DEBUG:
+        print(f"> Obtained data file with experimental data called: {DATA_FILE_NAME}")
+
     data_file = data_file[data_file["F"] != 0]
     kinematic_sets = sorted(data_file["set"].unique())
 
@@ -553,20 +557,21 @@ def run():
         x_data = data_file['x_b'],
         y_data = data_file['QQ'],
         z_data = -data_file['t'],
-        color = 'red',
+        color = 'royalblue',
         marker = '.')
     figure_instance_kinematic_phase_space.savefig(f"phase_space_v{_version_number}.png")
     plt.close()
     
-    for kinematic_set_number in kinematic_sets:
-    # RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
-    # for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
+    # We now perform local fits:
+    # for kinematic_set_number in kinematic_sets:
+    RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
+    for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
 
         if SETTING_VERBOSE:
             print(f"> Now running kinematic set number {kinematic_set_number}...")
 
         run_local_fit_replica_method(
-            number_of_replicas = 200,
+            number_of_replicas = 1,
             model_builder = local_fit_model,
             data_file = data_file,
             kinematic_set_number = kinematic_set_number)

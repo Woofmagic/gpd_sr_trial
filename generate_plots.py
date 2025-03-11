@@ -195,8 +195,8 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
 
         print(f"> Now processing kinematic set number {kinematic_set}")
 
-        f_vs_phi_csv = os.path.join(f'science/analysis/version_4/cross_section_plots/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
-        cff_predictions_csv = f'science/analysis/version_4/cff_predictions/CFFs_Predictions_Set_{kinematic_set}.csv'
+        f_vs_phi_csv = os.path.join(f'science/data/version_4/cross_section_projections/F_vs_phi_x_Kinematic_Set_{kinematic_set}.csv')
+        cff_predictions_csv = f'science/data/version_4/cff_projections/CFFs_Predictions_Set_{kinematic_set}.csv'
         cff_all_sets_combined_csv = os.path.join('CFFs_AllSets_Combined.csv')
 
 
@@ -220,12 +220,12 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
     print("All plots have been generated.")
 
 # Example usage
-evaluation_csv = 'DNN_projections.csv'
+evaluation_csv = 'DNN_projections_16_to_30.csv'
 scratch_path = '~/'
 output_dir = 'science/version_4/cff_plots'
 
 # Read the CSV file
-df = pd.read_csv('DNN_projections.csv')
+df = pd.read_csv('DNN_projections_16_to_30.csv')
 
 # Remove duplicate columns
 df = remove_duplicate_columns(df)

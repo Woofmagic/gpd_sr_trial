@@ -4,7 +4,16 @@
 
 /networks/**
 
-/science/**
+# Ignore everything in /science/analysis/version_1, version_2, and version_3
+/science/analysis/version_[1234]/
+
+# Ignore everything in /science/data/version_1, version_2, and version_3
+/science/data/version_[1234]/
+
+# # Ensure version_4 is NOT ignored
+# !/science/analysis/version_4/
+# !/science/data/version_4/
+
 
 **.csv
 **.png
