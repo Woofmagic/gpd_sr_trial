@@ -267,12 +267,12 @@ class PlotCustomizer:
             if label:
                 self.axes_object.legend()
 
-    def add_3d_scatter_plot(self, x_data, y_data, z_data, color = None, marker = 'o'):
+    def add_3d_scatter_plot(self, x_data, y_data, z_data, color = None, marker = 'o', alpha = 1.0):
 
         with rc_context(rc = self._custom_rc_params):
 
             # (1): Plot points in R3:
-            self.axes_object.scatter(x_data, y_data, z_data, color = color, marker = marker)
+            self.axes_object.scatter(x_data, y_data, z_data, color = color, marker = marker, alpha = alpha)
 
     def add_surface_plot(self, X, Y, Z, colormap: str ='viridis'):
 
