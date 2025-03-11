@@ -220,12 +220,12 @@ def generate_all_plots(evaluation_csv, cff_predictions_dir, output_dir):
     print("All plots have been generated.")
 
 # Example usage
-evaluation_csv = 'DNN_projections_16_to_30.csv'
+evaluation_csv = 'DNN_projections_1_to_10.csv'
 scratch_path = '~/'
 output_dir = 'science/version_4/cff_plots'
 
 # Read the CSV file
-df = pd.read_csv('DNN_projections_16_to_30.csv')
+df = pd.read_csv('DNN_projections_1_to_10.csv')
 
 # Remove duplicate columns
 df = remove_duplicate_columns(df)

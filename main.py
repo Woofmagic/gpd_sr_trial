@@ -151,16 +151,16 @@ def generate_replica_data(
     return pseudodata_dataframe
 
 def run_local_fit_replica_method(
-        number_of_replicas: int,
-        model_builder: function,
-        data_file: pd.DataFrame,
-        kinematic_set_number: int):
+        number_of_replicas,
+        model_builder,
+        data_file,
+        kinematic_set_number):
 
     if SETTING_VERBOSE:
         print(f"> Beginning Replica Method with {number_of_replicas} total Replicas...")
 
     this_replica_data_set = data_file[data_file['set'] == kinematic_set_number].reset_index(drop = True)
-    pseudodata_dataframe.to_csv(f"experimental_data_kinematic_set_{kinematic_set_number}.csv")
+    this_replica_data_set.to_csv(f"experimental_data_kinematic_set_{kinematic_set_number}.csv")
 
     for replica_index in range(number_of_replicas):
 
@@ -177,6 +177,8 @@ def run_local_fit_replica_method(
             mean_value_column_name = 'F',
             stddev_column_name = 'sigmaF',
             new_column_name = 'True_F')
+        
+        pseudodata_dataframe.to_csv(f"pseudodata_kinematic_set_{kinematic_set_number}_replica_{replica_index+1}.csv")
         
         if SETTING_DEBUG:
             print(f"> Successfully generated pseudodata dataframe for replica #{replica_index+1} in kinematic set {kinematic_set_number}")
@@ -200,7 +202,7 @@ def run_local_fit_replica_method(
             axis_instance_predictions,
             title = r"$\sigma$ vs. $\phi$ for Replica {} at Kinematic Setting {}".format(replica_index+1, kinematic_set_number),
             xlabel = r"$\phi$ [deg]",
-            ylabel = r"$\sigma$ [$\frac{{nb}}{{GeV}^{{4}}$]")
+            ylabel = r"$\sigma$ [$nb/GeV^{4}$]")
         
         plot_customization_predictions.add_errorbar_plot(
             x_data = this_replica_data_set['phi_x'],
