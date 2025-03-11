@@ -25,6 +25,7 @@ EarlyStop_patience = 1000
 modify_LR_patience = 400
 modify_LR_factor = 0.9
 SETTING_DNN_TRAINING_VERBOSE = 1
+_TRAIN_VALIDATION_PERCENTAGE = 0.10
 
 def symbolic_regression(x_data, y_data):
     
@@ -149,10 +150,17 @@ def generate_replica_data(
 
     return pseudodata_dataframe
 
-def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, kinematic_set_number):
+def run_local_fit_replica_method(
+        number_of_replicas: int,
+        model_builder: function,
+        data_file: pd.DataFrame,
+        kinematic_set_number: int):
 
     if SETTING_VERBOSE:
         print(f"> Beginning Replica Method with {number_of_replicas} total Replicas...")
+
+    this_replica_data_set = data_file[data_file['set'] == kinematic_set_number].reset_index(drop = True)
+    pseudodata_dataframe.to_csv(f"experimental_data_kinematic_set_{kinematic_set_number}.csv")
 
     for replica_index in range(number_of_replicas):
 
@@ -161,19 +169,26 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
 
         tensorflow_network = model_builder()
 
-        this_replica_data_set = data_file[data_file['set'] == kinematic_set_number].reset_index(drop = True)
+        if SETTING_DEBUG:
+            print("> Successfully initialized a TensorFlow network!")
 
         pseudodata_dataframe = generate_replica_data(
             pandas_dataframe = this_replica_data_set,
             mean_value_column_name = 'F',
             stddev_column_name = 'sigmaF',
             new_column_name = 'True_F')
+        
+        if SETTING_DEBUG:
+            print(f"> Successfully generated pseudodata dataframe for replica #{replica_index+1} in kinematic set {kinematic_set_number}")
 
         training_x_data, testing_x_data, training_y_data, testing_y_data, training_y_error, testing_y_error = split_data(
             x_data = pseudodata_dataframe[['QQ', 'x_b', 't', 'phi_x', 'k']],
             y_data = pseudodata_dataframe['F'],
             y_error_data = pseudodata_dataframe['sigmaF'],
-            split_percentage = 0.1)
+            split_percentage = _TRAIN_VALIDATION_PERCENTAGE)
+        
+        if SETTING_DEBUG:
+            print(f"> Successfully split pseudodata into training and testing data with a train/validation split of {_TRAIN_VALIDATION_PERCENTAGE}")
         
         # (1): Set up the Figure instance
         figure_instance_predictions = plt.figure(figsize = (18, 6))
@@ -183,9 +198,9 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
         
         plot_customization_predictions = PlotCustomizer(
             axis_instance_predictions,
-            title = r"$\sigma$ vs. $\phi$ for Kinematic Setting {{}}".format(kinematic_set_number),
-            xlabel = r"$\phi$",
-            ylabel = r"$\sigma$")
+            title = r"$\sigma$ vs. $\phi$ for Replica {} at Kinematic Setting {}".format(replica_index+1, kinematic_set_number),
+            xlabel = r"$\phi$ [deg]",
+            ylabel = r"$\sigma$ [$\frac{{nb}}{{GeV}^{{4}}$]")
         
         plot_customization_predictions.add_errorbar_plot(
             x_data = this_replica_data_set['phi_x'],
@@ -203,7 +218,7 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
             label = r'Generated Pseudodata',
             color = "red",)
         
-        figure_instance_predictions.savefig(f"cross_section_vs_phi_kinematic_set_{kinematic_set_number}_replica_{replica_index}.png")
+        figure_instance_predictions.savefig(f"cross_section_vs_phi_kinematic_set_{kinematic_set_number}_replica_{replica_index+1}.png")
 
         start_time_in_milliseconds = datetime.datetime.now().replace(microsecond = 0)
         print(f"> Replica #{replica_index + 1} now running...")
@@ -213,10 +228,10 @@ def run_local_fit_replica_method(number_of_replicas, model_builder, data_file, k
             training_y_data,
             validation_data = (testing_x_data, testing_y_data),
             epochs = EPOCHS,
-            callbacks = [
-                tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor = modify_LR_factor, patience = modify_LR_patience, mode = 'auto'),
-                tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = EarlyStop_patience)
-            ],
+            # callbacks = [
+            #     tf.keras.callbacks.ReduceLROnPlateau(monitor = 'loss', factor = modify_LR_factor, patience = modify_LR_patience, mode = 'auto'),
+            #     tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = EarlyStop_patience)
+            # ],
             batch_size = BATCH_SIZE_LOCAL_FITS,
             verbose = SETTING_DNN_TRAINING_VERBOSE)
         
@@ -521,7 +536,7 @@ def run():
     axis_instance_fitting_xb_versus_q_squared = figure_instance_kinematic_xb_versus_q_squared.add_subplot(1, 1, 1)
     plot_customization_data_comparison = PlotCustomizer(
         axis_instance_fitting_xb_versus_q_squared,
-        title = r"[Experimental] Kinematic Phase Space in $x_{{B}}$ and $Q^{{2}}$",
+        title = r"[Experimental] Kinematic Phase Space in $x_{{B}}$ and $Q^{2}$",
         xlabel = r"$x_{{B}}$",
         ylabel = r"Q^{{2}}",
         xlim = (0.0, 0.6),
@@ -558,13 +573,14 @@ def run():
         y_data = data_file['QQ'],
         z_data = -data_file['t'],
         color = 'royalblue',
-        marker = '.')
+        marker = '.',
+        alpha = 0.10)
     figure_instance_kinematic_phase_space.savefig(f"phase_space_v{_version_number}.png")
     plt.close()
     
     # We now perform local fits:
     # for kinematic_set_number in kinematic_sets:
-    RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1.0, 2.0, 3.0, 4.0]
+    RESTRICTED_KINEMATIC_SETS_FOR_TESTING = [1, 2, 3, 4]
     for kinematic_set_number in RESTRICTED_KINEMATIC_SETS_FOR_TESTING:
 
         if SETTING_VERBOSE:
@@ -579,7 +595,7 @@ def run():
         if SETTING_VERBOSE:
             print(f"> Finished running Replica Method on kinematic set number {kinematic_set_number}!")
 
-    available_kinematic_sets = [1, 2, 3, 4]
+    available_kinematic_sets = RESTRICTED_KINEMATIC_SETS_FOR_TESTING
     for available_kinematic_set in available_kinematic_sets:
 
         if SETTING_VERBOSE:
@@ -598,7 +614,6 @@ def run():
             print(f"> Obtained {len(model_paths)} models.")
 
         dataframe_restricted_to_current_kinematic_set = data_file[data_file['set'] == available_kinematic_set]
-        dataframe_restricted_to_current_kinematic_set = dataframe_restricted_to_current_kinematic_set
 
         prediction_inputs = dataframe_restricted_to_current_kinematic_set[['QQ', 'x_b', 't', 'phi_x', 'k']].to_numpy()
         real_cross_section_values = dataframe_restricted_to_current_kinematic_set['F'].values

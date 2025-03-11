@@ -6,11 +6,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Concatenate, Dense, Lambda
 from tensorflow.keras.models import Model
 
-class cross_section_calculation:
+class CrossSectionCalculation:
     def __init__(self):
-        self.module = BHDVCStf()
+        self.module = BHDVCSTensorFlow()
 
-    def fn_1(self, kins, cffs):
+    def fn_1(self, kins: tuple, cffs: tuple) -> float:
         phi, QQ, x, t, k, F1, F2 = kins
         ReH, ReE, ReHtilde, c0fit = cffs
         ee, y, xi, Gamma, tmin, Ktilde_10, K = self.module.SetKinematics(QQ, x, t, k)
@@ -43,7 +43,7 @@ class F1F2:
     def f1_f21(self, t):
         return self.ffF1(t), self.ffF2(t)
     
-class BHDVCStf(object):
+class BHDVCSTensorFlow(object):
 
     def __init__(self):
         self.ALP_INV = tf.constant(137.0359998)  # 1 / Electromagnetic Fine Structure Constant
@@ -303,7 +303,7 @@ class BHDVCStf(object):
 class TotalFLayer(tf.keras.layers.Layer):
     def __init__(self, **kwargs):
         super(TotalFLayer, self).__init__(**kwargs)  # Pass kwargs to the superclass
-        self.f = BHDVCStf()
+        self.f = BHDVCSTensorFlow()
 
     def call(self, inputs):
         return self.f.curve_fit(inputs[:, 0:5], inputs[:, 5:9]) # QQ, x, t, phi, k, cff1, cff2, cff3, cff4
