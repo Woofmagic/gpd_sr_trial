@@ -39,7 +39,7 @@ def symbolic_regression(x_data, y_data):
     "exp", "log", "sqrt", "sin", "cos", "tan"
     ]
 
-    _SEARCH_SPACE_MAXIUMUM_COMPLEXITY = 20
+    _SEARCH_SPACE_MAXIUMUM_COMPLEXITY = 25
 
     _SEARCH_SPACE_MAXIMUM_DEPTH = None
 
@@ -62,15 +62,15 @@ def symbolic_regression(x_data, y_data):
     # === SEARCH SIZE ===
 
     # (1): Number of iterations for the algorithm:
-    niterations = 40,
+    niterations = 1000,
 
     # (2): The number of "populations" running:
-    populations = 15,
+    populations = 500,
 
     # (3): The size of each population:
-    population_size = 33,
+    population_size = 50,
 
-    # (4): Whatever this means:
+    # (4): Whatever the fuck this means:
     ncycles_per_iteration = 550,
 
     # === OBJECTIVE ===
@@ -92,7 +92,7 @@ def symbolic_regression(x_data, y_data):
 
     # === COMPLEXITY ===
 
-    # (1): Multiplicative factor that penalizes a complex function:
+    # (1): Multiplicative factor that penalizes a complex function: l(E) = l_{loss}(E) exp(parsimony * etc.)
     parsimony = 0.0032,
 
     # (2): A complicated dictionary governing how complex a given operation can be:
