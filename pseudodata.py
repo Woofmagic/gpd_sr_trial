@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from networks.local_fit.local_fit_model import *
+from networks.local_fit.local_fit_model import F1F2, F_calc
 from mpl_toolkits.mplot3d import Axes3D
 
 def genf(x,t,a,b,c,d,e,f):
