@@ -51,7 +51,7 @@ modify_LR_factor = 0.9
 SETTING_DNN_TRAINING_VERBOSE = 1
 _TRAIN_VALIDATION_PERCENTAGE = 0.10
 
-NUMBER_OF_REPLICAS = 15
+NUMBER_OF_REPLICAS = 30
 
 def run_global_fit_replica_method(
         replica_index: int,
@@ -296,7 +296,7 @@ def parallelized_global_fitting(
         number_of_total_iterations_needed: int,
         version_number: int):
     
-    DATA_GLOBAL_FIT_FILE_NAME = "DNN_projections_16_to_30.csv"
+    DATA_GLOBAL_FIT_FILE_NAME = "DNN_projections_116_to_130.csv"
     data_global_fit_for_replica_data = pd.read_csv(DATA_GLOBAL_FIT_FILE_NAME)
 
     global_fit_data_unique_kinematic_sets = data_global_fit_for_replica_data.groupby('set').first().reset_index()
@@ -571,7 +571,7 @@ if __name__ == "__main__":
 
     version_number = 5
 
-    DATA_GLOBAL_FIT_FILE_NAME = "DNN_projections_16_to_30.csv"
+    DATA_GLOBAL_FIT_FILE_NAME = "DNN_projections_116_to_130.csv"
     data_global_fit_for_replica_data = pd.read_csv(DATA_GLOBAL_FIT_FILE_NAME)
 
     global_fit_data_unique_kinematic_sets = data_global_fit_for_replica_data.groupby('set').first().reset_index()
@@ -618,3 +618,89 @@ if __name__ == "__main__":
 
     # Add standard deviations (replica uncertainty) to DataFrame
     data_global_fit_for_replica_data[['ReH_std', 'ReE_std', 'ReHt_std', 'dvcs_std']] = std_predictions
+
+    data_global_fit_for_replica_data.to_csv("global_fit_predictions.csv")
+
+    NAME_OF_PSEUDODATA_FILE = 'psueodata_with_sampling.csv'
+
+    df = pd.read_csv(NAME_OF_PSEUDODATA_FILE)
+
+    figure_1 = plt.figure(figsize=(8, 6))
+    axis_1 = figure_1.add_subplot(1, 1, 1, projection='3d')
+    plot_1 = PlotCustomizer(axis_1,
+        title = r"[Pseudodata] Re[H] Values Across Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$-t$",
+        grid = True)
+    plot_1.add_3d_scatter_plot(
+        x_data = df['x_b'],
+        y_data = df['QQ'],
+        z_data = -df['t'],
+        color = df['ReH'],
+        marker = 'o',
+        alpha = 0.30,
+        colorbar_label = 'Re[H]')
+
+    figure_1.savefig("cff_h_vs_xb_and_t.png")
+    plt.close(figure_1)
+
+    figure_2 = plt.figure(figsize=(8, 6))
+    axis_2 = figure_2.add_subplot(1, 1, 1, projection='3d')
+    plot_2 = PlotCustomizer(axis_2,
+        title = r"[Pseudodata] Re[E] Values Across Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$-t$",
+        grid = True)
+    plot_2.add_3d_scatter_plot(
+        x_data = df['x_b'],
+        y_data = df['QQ'],
+        z_data = -df['t'],
+        color = df['ReE'],
+        marker = 'o',
+        alpha = 0.30,
+        colorbar_label = 'Re[E]')
+
+    figure_2.savefig("cff_e_vs_xb_and_t.png")
+    plt.close(figure_2)
+
+    figure_3 = plt.figure(figsize=(8, 6))
+    axis_3 = figure_3.add_subplot(1, 1, 1, projection='3d')
+    plot_3 = PlotCustomizer(axis_3,
+        title = r"[Pseudodata] Re[$\tilde{{H}}$] Values Across Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$-t$",
+        grid = True)
+    plot_3.add_3d_scatter_plot(
+        x_data = df['x_b'],
+        y_data = df['QQ'],
+        z_data = -df['t'],
+        color = df['ReHt'],
+        marker = 'o',
+        alpha = 0.30,
+        colorbar_label = r'Re[$\tilde{{H}}$]')
+
+    figure_3.savefig("cff_ht_vs_xb_and_t.png")
+    plt.close(figure_3)
+
+    figure_4 = plt.figure(figsize=(8, 6))
+    axis_4 = figure_4.add_subplot(1, 1, 1, projection='3d')
+    plot_4 = PlotCustomizer(axis_4,
+        title = r"[Pseudodata] DVCS Values Across Phase Space",
+        xlabel = r"$x_{{B}}$",
+        ylabel = r"$Q^{{2}}$",
+        zlabel = r"$-t$",
+        grid = True)
+    plot_4.add_3d_scatter_plot(
+        x_data = df['x_b'],
+        y_data = df['QQ'],
+        z_data = -df['t'],
+        color = df['dvcs'],
+        marker = 'o',
+        alpha = 0.30,
+        colorbar_label = r'DVCS')
+
+    figure_4.savefig("cff_dvcs_vs_xb_and_t.png")
+    plt.close(figure_4)
